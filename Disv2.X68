@@ -14,6 +14,7 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 * All have been tested.
+       BTST     #0,D1
        MOVE.W   D0,D1
        MOVEA.L  A0,A1
        ADDI.L   #4,D1   *Assembler changes this to ADDQ unless the number being added is greater than #8.
@@ -30,45 +31,48 @@ START:                  ; first instruction of program
        CMP.W    D1,D2
 
 * All have been tested.      
-*       ADD.W    D1,D2
-*       ADDA.L   A1,A2
-*       MULS.W   D1,D2
-*       AND.W    D1,D2
+       ADD.W    D1,D2
+       ADDA.L   A1,A2
+       MULS.W   D1,D2
+       AND.W    D1,D2
 
-*       LSL.W    D1,D2
-*       LSR.W    D1,D2
-*       ASL.W    D1,D2
-*       ASR.W    D1,D2
-*       ROL.W    D1,D2
-*       ROR.W    D1,D2
-*       LSL.W    $0
-*       LSR.W    $0
-*       ASL.W    $0
-*       ASR.W    $0
-*       ROL.W    $0
-*       ROR.W    $0
+       LSL.W    D1,D2
+       LSR.W    D1,D2
+       ASL.W    D1,D2
+       ASR.W    D1,D2
+       ROL.W    D1,D2
+       ROR.W    D1,D2
+       LSL.W    $0
+       LSR.W    $0
+       ASL.W    $0
+       ASR.W    $0
+       ROL.W    $0
+       ROR.W    $0
 
 * All have been tested.
-*       NOP
-*       BCC     SKIP        *6400   Condition: %0100
-*       BCS     SKIP        *6500   Condition: %0101
-*       BEQ     SKIP        *6700   Condition: %0111
-*       BGE     SKIP        *6C00   Condition: %1100
-*       BGT     SKIP        *6E00   Condition: %1110
-*       BHI     SKIP        *6200   Condition: %0010
-*       BLE     SKIP        *6F00   Condition: %1111
-*       BLS     SKIP        *6300   Condition: %0011
-*       BLT     SKIP        *6D00   Condition: %1101
-*       BMI     SKIP        *6B00   Condition: %1011
-*       BNE     SKIP        *6600   Condition: %0110
-*       BPL     SKIP        *6A00   Condition: %1010
-*       BVC     SKIP        *6800   Condition: %1000
-*       BVS     SKIP        *6900   Condition: %1001
-*       BRA     SKIP        *6000   Condition: %0000
+       NOP
+       BCC     SKIP        *6400   Condition: %0100
+       BCS     SKIP        *6500   Condition: %0101
+       BEQ     SKIP        *6700   Condition: %0111
+       BGE     SKIP        *6C00   Condition: %1100
+       BGT     SKIP        *6E00   Condition: %1110
+       BHI     SKIP        *6200   Condition: %0010
+       BLE     SKIP        *6F00   Condition: %1111
+       BLS     SKIP        *6300   Condition: %0011
+       BLT     SKIP        *6D00   Condition: %1101
+       BMI     SKIP        *6B00   Condition: %1011
+       BNE     SKIP        *6600   Condition: %0110
+       BPL     SKIP        *6A00   Condition: %1010
+       BVC     SKIP        *6800   Condition: %1000
+       BVS     SKIP        *6900   Condition: %1001
+       BRA     SKIP        *6000   Condition: %0000
                 
-SKIP                           *Currently only correctly disassembles the first instruction        
+SKIP                                  
     MOVE.L  #$1000,A2       *Starting addres for code to be disassembled.
+    MOVE.L  #$2000,A3
 RELOOP
+    CMP.L   A2,A3
+    BEQ     DIS_END
     LEA     NEXT_LINE,A1 
     MOVE.B  #14,D0      
     TRAP    #15        
@@ -98,11 +102,13 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     TRAP    #15
     JMP     RELOOP
 BIN_0000_FOURTH  *Possibilities are ADDI and BTST.
+    BTST    #11,D1
+    BNE     BTST_SECT
     BTST    #8,D1
-    BEQ     ADDI_SECT
-BTST_SECT
-    LEA     BTST_MESS,A1
-    MOVE.B  #14,D0
+    BNE     BTST_SECT
+ADDI_SECT                   *Outputs the message 'ADDI.'.
+    LEA     ADDI_MESS,A1 
+    MOVE.B  #14,D0      
     TRAP    #15
     JMP     RELOOP
 BIN_01_THIRD    *Possibilities are MOVEQ, MOVEM, ADDQ, LEA, CLR, Bcc, and JSR.
@@ -373,11 +379,6 @@ DIVU_SECT                   *Outputs the message 'DIVU.'.
     MOVE.B  #14,D0      
     TRAP    #15
     JMP     RELOOP 
-ADDI_SECT                   *Outputs the message 'ADDI.'.
-    LEA     ADDI_MESS,A1 
-    MOVE.B  #14,D0      
-    TRAP    #15
-    JMP     RELOOP 
 MOVEA_SECT
     LEA     MOVEA_MESS,A1   *Outputs the message 'MOVEA.'.
     MOVE.B  #14,D0      
@@ -433,8 +434,15 @@ TRAP_SECT
     MOVE.B  #14,D0
     TRAP    #15
     JMP     RELOOP
+BTST_SECT
+    LEA     BTST_MESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    JMP     RELOOP
 DUMMY_SUB
     RTS
+    
+DIS_END
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
 LF      EQU     $0A             ASCII code for Line Feed
