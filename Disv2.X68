@@ -66,7 +66,7 @@ START:                  ; first instruction of program
 *       BVS     SKIP        *6900   Condition: %1001
 *       BRA     SKIP        *6000   Condition: %0000
                 
-SKIP                           *Currently only disassembles the first instruction        
+SKIP                           *Currently only correctly disassembles the first instruction        
     MOVE.L  #$1000,A2       *Starting addres for code to be disassembled.
 RELOOP
     LEA     NEXT_LINE,A1 
