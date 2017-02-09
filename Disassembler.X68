@@ -103,9 +103,9 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     JMP     RELOOP
 BIN_0000_FOURTH  *Possibilities are ADDI and BTST.
     BTST    #11,D1
-    BNE     BTST_SECT
+    BNE     BTST_STATIC_SECT
     BTST    #8,D1
-    BNE     BTST_SECT
+    BNE     BTST_DYNAMIC_SECT
 ADDI_SECT                   *Outputs the message 'ADDI.'.
     LEA     ADDI_MESS,A1 
     MOVE.B  #14,D0      
@@ -434,14 +434,24 @@ TRAP_SECT
     MOVE.B  #14,D0
     TRAP    #15
     JMP     RELOOP
-BTST_SECT
+BTST_STATIC_SECT
     LEA     BTST_MESS,A1
     MOVE.B  #14,D0
     TRAP    #15
-    JMP     RELOOP
+    MOVE.B  #%10110111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    JMP     RELOOP              *Reiterate to beginning of disassembler.
+BTST_DYNAMIC_SECT
+    LEA     BTST_MESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    MOVE.B  #%10111111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    JMP     RELOOP              *Reiterate to beginning of disassembler.
 DUMMY_SUB
     RTS
     
+
 *Bits stored in D7 represent the valid modes in the current opcode being disassembled.
                                                     *Bit set means valid for that mode.
 *Data Register Direct                               %00000001
@@ -452,48 +462,76 @@ DUMMY_SUB
 *Address Register Indirect with Pre decrementing    %00100000
 *Absolute Long Address                              %01000000
 *Absolute Word Address                              %10000000
-
-EFF_ADDR_MODE_REG  
+EFF_ADDR_MODE_REG       *Modifies D2 and D3.
     *MOVE.W  $1234,D1   
-    BTST    #5,D0
+    BTST    #5,D1
     BNE     MODE_1
-MODE_0
-    
+MODE_0      *Possibilities are Dn, An, (An), (AN)+
+    BTST    #4,D1
+    BNE     MODE_01
+MODE_00     *Possibilities are Dn, An
+    BTST    #3,D1
+    BNE     MODE_ADDR_DIRECT
+MODE_DAT_DIRECT
+    BTST    #0,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.
+MODE_01     *Possibilities are (An), (An)+
+    BTST    #3,D1
+    BNE     MODE_ADDR_INDIR_INCR
+MODE_ADDR_INDIR
+    BTST    #2,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.
 MODE_1
-    BTST    #4,D0
-    BNE     MODE_11
-MODE_11
-    BTST    #3,D0
+    BTST    #4,D1
+    BNE     MODE_10
+MODE_10
+    BTST    #3,D1
+    BNE     INVALID_MODE
+MODE_ADDR_INDIR_DECR
+    BTST    #5,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.     
+MODE_11     *Possibilities are (xxx).W, (xxx).L, and #<data>
+    BTST    #3,D1
     BEQ     INVALID_MODE
-MODE_111
-    MOVE.B  D0,D1
-    AND.B   #%00000111,D1
-    CMP.B   #%00000000,D1
-    BEQ     WORD_ADDRESS
-    CMP.B   #%00000001,D1
-    BEQ     LONG_ADDRESS
-    CMP.B   #%00000100,D1
-    BEQ     IMMEDIATE_DATA
-    BRA     INVALID_MODE
-
-
-
-WORD_ADDRESS
-    BTST    #7,D7
-    BNE     VALID_MODE
-    BRA     INVALID_MODE
-LONG_ADDRESS
-    BTST    #6,D7
-    BNE     VALID_MODE
-    BRA     INVALID_MODE
-IMMEDIATE_DATA
-    BTST    #3,D7
-    BNE     VALID_MODE
-    BRA     INVALID_MODE
+MODE_111    *Possibilities are (xxx).W, (xxx).L, and #<data>
+    MOVE.B  D1,D2                   *Creating a copy of D1 in order to isolate bits for mode differentiation.
+    AND.B   #%00000111,D2           *Relevant bits for diferrentiating the current possible modes.
+    CMP.B   #%00000000,D2           *If this comparison is true, then the mode is a word address.
+    BEQ     MODE_WORD_ADDRESS       *Go to case for Word Address.
+    CMP.B   #%00000001,D2           *If this comparison is true, then the mode is a Long address.
+    BEQ     MODE_LONG_ADDRESS       *Go to case for Long Address.
+    CMP.B   #%00000100,D2           *If this comparison is true, then the mode is immediate data.
+    BEQ     MODE_IMMEDIATE_DATA     *Go to case for immediate data.
+    BRA     INVALID_MODE            *Else, code must be invalid.
+MODE_ADDR_DIRECT        
+    BTST    #1,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.          
+MODE_IMMEDIATE_DATA     
+    BTST    #3,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.           
+MODE_ADDR_INDIR_INCR
+    BTST    #4,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.           
+MODE_LONG_ADDRESS
+    BTST    #6,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.            
+MODE_WORD_ADDRESS
+    BTST    #7,D7                   *Test if this mode is valid for the current OPCode.
+    BNE     VALID_MODE              *If bit was set, goto case for valid mode.
+    BRA     INVALID_MODE            *Else, goto case for invalid mode.            
 INVALID_MODE
-    MOVE.B  #0,D1
+    MOVE.B  #0,D3
+    RTS
 VALID_MODE
-    MOVE.B  #1,D1
+    MOVE.B  #1,D3
+    RTS
 DIS_END
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
@@ -558,6 +596,7 @@ NEXT_LINE       DC.B    CR,LF,0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
