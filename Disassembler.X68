@@ -19,6 +19,13 @@ START:                  ; first instruction of program
        MOVEA.L  A0,A1
        ADDI.L   #4,D1   *Assembler changes this to ADDQ unless the number being added is greater than #8.
        ADDI.L   #9,D1
+       ADDI.W   #4,D1
+       ADDI.B   #4,D1
+       ADDI.W   #8,D1
+       ADDI.W   #9,D1
+       ADDI.B   #8,D1
+       ADDI.B   #9,D1
+       ADDI.B   #127,D1
        LEA      B_MESS,A4
        CLR.L    D1
        JSR      DUMMY_SUB
@@ -258,6 +265,7 @@ BMI_SECT
     MOVE.B  #14,D0      
     TRAP    #15
     JMP     RELOOP
+
 *End of Condition Section **********************************************
 
 BIN_1_SECOND    *Possibilities are SUB, DIVU, OR, CMP ADD, ADDA, MULS, AND, LSL, LSR, ASR, ASL, ROL, and ROR.
@@ -440,6 +448,9 @@ BTST_STATIC_SECT
     TRAP    #15
     MOVE.B  #%10110111,D7       *Valid modes for this OPCode.
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3
+    BNE     PRINT_VALID_BTST_STATIC
+    JSR     PRINT_INVALID_OPCODE
     JMP     RELOOP              *Reiterate to beginning of disassembler.
 BTST_DYNAMIC_SECT
     LEA     BTST_MESS,A1
@@ -447,6 +458,7 @@ BTST_DYNAMIC_SECT
     TRAP    #15
     MOVE.B  #%10111111,D7       *Valid modes for this OPCode.
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+
     JMP     RELOOP              *Reiterate to beginning of disassembler.
 DUMMY_SUB
     RTS
@@ -462,6 +474,7 @@ DUMMY_SUB
 *Address Register Indirect with Pre decrementing    %00100000
 *Absolute Long Address                              %01000000
 *Absolute Word Address                              %10000000
+     
 EFF_ADDR_MODE_REG       *Modifies D2 and D3.
     *MOVE.W  $1234,D1   
     BTST    #5,D1
@@ -532,6 +545,42 @@ INVALID_MODE
 VALID_MODE
     MOVE.B  #1,D3
     RTS
+    
+
+PRINT_VALID_BTST_STATIC
+    LEA     SPACE,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    LEA     POUND,A1
+    TRAP    #15
+    
+    *Need to get number still, this will print everything except number and data register ATM
+    
+    LEA     COMMA,A1
+    TRAP    #15
+    BTST    #5,D1
+    BEQ     VALID_MODE_0
+    
+    JMP     RELOOP
+VALID_MODE_0                         *Options are Dn, (An), or (An)+
+    BTST    #4,D1
+    BEQ     VALID_MODE_01
+    *The addresing mode is 000, because there is no other options for the mode to have two 0's
+    LEA     D_REGISTER_MESS,A1
+    TRAP    #15
+    
+
+    JMP     RELOOP
+
+     
+VALID_MODE_01    
+    JMP     RELOOP
+PRINT_INVALID_OPCODE
+    LEA     INVALID_MESS,A1 
+    MOVE.B  #14,D0      
+    TRAP    #15
+    RTS
+    
 DIS_END
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
@@ -582,8 +631,24 @@ B_MESS          DC.B    'B',0
 W_MESS          DC.B    'W',0
 L_MESS          DC.B    'L',0
 NEXT_LINE       DC.B    CR,LF,0    
+INVALID_MESS    DC.B    'INVALID OPCODE',0
+COMMA           DC.B    ',',0
+POUND           DC.B    '#',0
+SPACE           DC.B    ' ',0
 
+*Address Register and Data register printout
+A_REGISTER_MESS DC.B    'A',0
+D_REGISTER_MESS DC.B    'D',0
 
+*Register numbers 0-7
+REGISTER_NUM_0  DC.B    '0',0
+REGISTER_NUM_1  DC.B    '1',0
+REGISTER_NUM_2  DC.B    '2',0
+REGISTER_NUM_3  DC.B    '3',0
+REGISTER_NUM_4  DC.B    '4',0
+REGISTER_NUM_5  DC.B    '5',0
+REGISTER_NUM_6  DC.B    '6',0
+REGISTER_NUM_7  DC.B    '7',0
 
 * Put variables and constants here
 
@@ -596,6 +661,8 @@ NEXT_LINE       DC.B    CR,LF,0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
+
 
 *~Font name~Courier New~
 *~Font size~10~
