@@ -1,6 +1,6 @@
 *-----------------------------------------------------------
 * Title      : Disassembler test.
-* Written by : Samuel Meyerding
+* Written by : Samuel Meyerding, Conor Van Achte, Abhi Trivedi
 * Date       : January 22nd, 2017
 * Description: Disassembler prototype.
 *              
@@ -556,6 +556,19 @@ PRINT_VALID_BTST_STATIC
     
     *Need to get number still, this will print everything except number and data register ATM
     
+    
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+    
+    
+    MOVE.W  D1,D4                  *Copy the bits to D4, because we are going to print and need to use D1
+    MOVE.W  D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2
+    MOVE.B  #15,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+    
+    MOVE.B  #14,D0
     LEA     COMMA,A1
     TRAP    #15
     BTST    #5,D1
@@ -568,6 +581,8 @@ VALID_MODE_0                         *Options are Dn, (An), or (An)+
     *The addresing mode is 000, because there is no other options for the mode to have two 0's
     LEA     D_REGISTER_MESS,A1
     TRAP    #15
+    
+    *BTST    #2,D1
     
 
     JMP     RELOOP
@@ -664,6 +679,10 @@ REGISTER_NUM_7  DC.B    '7',0
 
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
