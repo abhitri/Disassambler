@@ -15,6 +15,8 @@ START:                  ; first instruction of program
 
 * All have been tested.
        BTST     #0,D1
+       BTST     #0,(A6)
+       BTST     #0,(A5)+
        MOVE.W   D0,D1
        MOVEA.L  A0,A1
        ADDI.L   #4,D1   *Assembler changes this to ADDQ unless the number being added is greater than #8.
@@ -548,10 +550,10 @@ VALID_MODE
     
 
 PRINT_VALID_BTST_STATIC
-    LEA     SPACE,A1
+    LEA     SPACE,A1                *Print a space to separate BTST with the addressing mode
     MOVE.B  #14,D0
     TRAP    #15
-    LEA     POUND,A1
+    LEA     POUND,A1                *Load and print a #, this is specific to this particular mode
     TRAP    #15
     
     *Need to get number still, this will print everything except number and data register ATM
@@ -577,18 +579,33 @@ PRINT_VALID_BTST_STATIC
     JMP     RELOOP
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
     BTST    #4,D1
-    BEQ     VALID_MODE_01
+    BNE     VALID_MODE_01
     *The addresing mode is 000, because there is no other options for the mode to have two 0's
-    LEA     D_REGISTER_MESS,A1
+    LEA     D_REGISTER_MESS,A1       *The only option here is a Dn
+    TRAP    #15                      
+    MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
+    LSL.L   D6,D1                    
+    LSR.L   D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
-    
-    *BTST    #2,D1
-    
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
 
     JMP     RELOOP
 
-     
+     *********************Incomplete, does not print out address register number, or closed bracket
 VALID_MODE_01    
+    LEA     INDIRECT_ADDR_MESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    BTST    #3,D1
+    BNE     VALID_MODE_011 
+    JMP     RELOOP
+VALID_MODE_011
+    LEA     PLUS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
     JMP     RELOOP
 PRINT_INVALID_OPCODE
     LEA     INVALID_MESS,A1 
@@ -650,20 +667,16 @@ INVALID_MESS    DC.B    'INVALID OPCODE',0
 COMMA           DC.B    ',',0
 POUND           DC.B    '#',0
 SPACE           DC.B    ' ',0
+MINUS           DC.B    '-',0
+PLUS            DC.B    '+',0
+CLOSE_PAREN     DC.B    ')',0
+
 
 *Address Register and Data register printout
 A_REGISTER_MESS DC.B    'A',0
 D_REGISTER_MESS DC.B    'D',0
+INDIRECT_ADDR_MESS DC.B '(A',0
 
-*Register numbers 0-7
-REGISTER_NUM_0  DC.B    '0',0
-REGISTER_NUM_1  DC.B    '1',0
-REGISTER_NUM_2  DC.B    '2',0
-REGISTER_NUM_3  DC.B    '3',0
-REGISTER_NUM_4  DC.B    '4',0
-REGISTER_NUM_5  DC.B    '5',0
-REGISTER_NUM_6  DC.B    '6',0
-REGISTER_NUM_7  DC.B    '7',0
 
 * Put variables and constants here
 
@@ -679,6 +692,10 @@ REGISTER_NUM_7  DC.B    '7',0
 
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
