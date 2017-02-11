@@ -118,6 +118,10 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     JSR     EFF_ADDR_MODE_REG       *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.B  #%11101101,D3           *Shift count of 13 for VALIDATE_SIZE and any size accepted.
+    JSR     VALIDATE_SIZE_MOVELIKE  *Subroutine for validating size portion of OPCode.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 BIN_0000_FOURTH  *Possibilities are ADDI and BTST.
     BTST    #11,D1
@@ -128,8 +132,16 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     LEA     ADDI_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D3               *Copy OPCode into D3 in order to allow for isolation of bits.
+    AND.W   #%1111111100000000,D3
+    CMP.W   #%0000011000000000,D3
+    BNE     PRINT_INVALID_OPCODE
     MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.B  #%11100111,D3           *Shift count of 7 for VALIDATE_SIZE, and any size accepted.
+    JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
@@ -158,6 +170,10 @@ CLR_SECT
     TRAP    #15
     MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.B  #%11100111,D3           *Shift count of 7 for VALIDATE_SIZE, and any size accepted.
+    JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP           
@@ -358,6 +374,10 @@ REG_SHIFTS      *This has been determined to be a register shift.
     MOVE.B  D1,D2           *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
     AND.B   #%00011000,D2   *Significant bits for determining what kind of shift.
     CMP.B   #%00001000,D2   *Compare with the shift with the middle value in the range.
+    MOVE.B  #%11100111,D3           *Shift count of 13 for VALIDATE_SIZE and any size accepted.
+    JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     BGT     ROL_ROR_SECT    *If greater than, it's a rotation.
     BEQ     LSL_LSR_SECT    *If greater than, it's a Logical Shift. Else, Continue to Arithmetic shifts.
 ASR_ASL_SECT    *Arithmeitc shift. Determines direction.
@@ -484,13 +504,21 @@ MOVEA_SECT
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.B  #%11001101,D3           *Shift count of 13 for VALIDATE_SIZE, and any size but BYTE accepted.
+    JSR     VALIDATE_SIZE_MOVELIKE  *Subroutine for validating size portion of OPCode.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP    
 ADDQ_SECT     
     LEA     ADDQ_MESS,A1    *Outputs the message 'ADDQ.'.
     MOVE.B  #14,D0      
     TRAP    #15
     MOVE.B  #%11110111,D7       *Valid modes for this OPCode.
-    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity 
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.B  #%11100111,D3           *Shift count of 7 for VALIDATE_SIZE and any size accepted.
+    JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP 
@@ -520,7 +548,7 @@ JSR_SECT
     MOVE.B  #14,D0      
     TRAP    #15
     MOVE.B  #%11000100,D7       *Valid modes for this OPCode.
-    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
@@ -675,7 +703,74 @@ VALID_MODE
     MOVE.B  #1,D3
     RTS
     
+*D3 needs to contain the shift over that has to be done in order to get to size.
+*D3.B should contain %***(5-bit  shift count). The first three bits determine which 
+*sizes are valid. The 5-bit shift count should always be more than 0.
+*Result will be stored in D#.b as #1 for valid size and #0 for invalid.
+*%100***** is LONG
+*%010***** is WORD
+*%001***** is BYTE
+VALIDATE_SIZE_MOVELIKE
+    MOVE.L  D4,-(SP)                *Save current value of D4 into the stack.
+    CLR.L   D4
+    MOVE.B  D3,D4                   *Copy D3 into D4 in order to isolate shift count.
+    AND.B   #%00011111,D4           *Isolate shift count in D4.         
+    BTST    D4,D1                   *Test the left bit of size to determine size.
+    BNE     MOVE_SIZE_1                  *Branch to case for if the bit was a 1.
+MOVE_SIZE_0
+    SUB     #1,D4                   *Adjust shift count to be the bit to the right of the previously tested bit.
+    BTST    D4,D1                   *Test the second bit for the size.
+    BNE     SIZE_BYTE_OPERATION     *If it's a 1, then it is a BYTE operation.
+INVALID_SIZE
+    MOVE.B  #0,D3                   *Sets the value in D3 to zero before returning.
+    MOVE.L  (SP)+,D4                *Restore original value of D4.
+    RTS                             
+SIZE_BYTE_OPERATION *(01)
+    BTST    #5,D3                   *If this bit is one, then a BYTE operation is defined for this OPCODE.
+    BNE     VALID_SIZE              *Branch to valid case if it was a 1.
+    BRA     INVALID_SIZE            *Else, branch to invalid case.
+MOVE_SIZE_1
+    SUB     #1,D4                   *Adjust shift count to be the bit to the right of the previously tested bit.
+    BTST    D4,D1                   *Test the second bit for the size.
+    BNE     SIZE_WORD_OPERATION     *If it's a 1, then it is a WORD operation.
+SIZE_LONG_OPERATION *(10)
+    BTST    #7,D3                   *If this bit is one, then a LONG operation is defined for this OPCODE.
+    BNE     VALID_SIZE              *Branch to valid case if it was a 1.
+    BRA     INVALID_SIZE            *Else, branch to invalid case.
+SIZE_WORD_OPERATION *(11) 
+    BTST    #6,D3                   *If this bit is one, then a WORD operation is defined for this OPCODE.
+    BNE     VALID_SIZE              *Branch to valid case if it was a 1.
+    BRA     INVALID_SIZE            *Else, branch to invalid case.
+VALID_SIZE
+    MOVE.B  #1,D3                   *A 1 in D3 signifies a valid SIZE was found for this OPCode.
+    MOVE.L  (SP)+,D4                *Restore original value of D4.
+    RTS  
 
+*D3 needs to contain the shift over that has to be done in order to get to size.
+*D3.B should contain %***(5-bit  shift count). The first three bits determine which 
+*sizes are valid. The 5-bit shift count should always be more than 0.
+*Result will be stored in D#.b as #1 for valid size and #0 for invalid.
+*%100***** is LONG
+*%010***** is WORD
+*%001***** is BYTE
+VALIDATE_SIZE_CLRLIKE
+    MOVE.L  D4,-(SP)                *Save current value of D4 into the stack.
+    CLR.L   D4
+    MOVE.B  D3,D4                   *Copy D3 into D4 in order to isolate shift count.
+    AND.B   #%00011111,D4           *Isolate shift count in D4.         
+    BTST    D4,D1                   *Test the left bit of size to determine size.
+    BNE     CLR_SIZE_1                  *Branch to case for if the bit was a 1.
+CLR_SIZE_0
+    SUB     #1,D4                   *Adjust shift count to be the bit to the right of the previously tested bit.
+    BTST    D4,D1                   *Test the second bit for the size.
+    BNE     SIZE_WORD_OPERATION     *If it's a 1, then it is a BYTE operation.
+    BRA     SIZE_BYTE_OPERATION                    
+CLR_SIZE_1
+    SUB     #1,D4                   *Adjust shift count to be the bit to the right of the previously tested bit.
+    BTST    D4,D1                   *Test the second bit for the size.
+    BNE     INVALID_SIZE            *If it's a 1, then it is an invalid operation.
+    BRA     SIZE_LONG_OPERATION
+    
 PRINT_VALID_BTST_STATIC
     LEA     SPACE,A1                *Print a space to separate BTST with the addressing mode
     MOVE.B  #14,D0
@@ -827,6 +922,7 @@ INDIRECT_ADDR_MESS DC.B '(A',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 *~Font name~Courier New~
