@@ -706,7 +706,7 @@ VALID_MODE
 *D3 needs to contain the shift over that has to be done in order to get to size.
 *D3.B should contain %***(5-bit  shift count). The first three bits determine which 
 *sizes are valid. The 5-bit shift count should always be more than 0.
-*Result will be stored in D#.b as #1 for valid size and #0 for invalid.
+*Result will be stored in D3.B as #1 for valid size and #0 for invalid.
 *%100***** is LONG
 *%010***** is WORD
 *%001***** is BYTE
@@ -749,7 +749,7 @@ VALID_SIZE
 *D3 needs to contain the shift over that has to be done in order to get to size.
 *D3.B should contain %***(5-bit  shift count). The first three bits determine which 
 *sizes are valid. The 5-bit shift count should always be more than 0.
-*Result will be stored in D#.b as #1 for valid size and #0 for invalid.
+*Result will be stored in D3.B as #1 for valid size and #0 for invalid.
 *%100***** is LONG
 *%010***** is WORD
 *%001***** is BYTE
