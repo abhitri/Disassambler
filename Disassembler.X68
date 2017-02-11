@@ -12,10 +12,52 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
    
     ORG     $1000
 START:                  ; first instruction of program
+* All have been tested.      
+       ADD.W    D1,D2
+       ADDA.L   A1,A2
+       MULS.W   D1,D2
 
 * All have been tested.
+       NOP
+       BCC     SKIP        *6400   Condition: %0100
+       BCS     SKIP        *6500   Condition: %0101
+       BEQ     SKIP        *6700   Condition: %0111
+       BGE     SKIP        *6C00   Condition: %1100
+       BGT     SKIP        *6E00   Condition: %1110
+       BHI     SKIP        *6200   Condition: %0010
+       BLE     SKIP        *6F00   Condition: %1111
+       BLS     SKIP        *6300   Condition: %0011
+       BLT     SKIP        *6D00   Condition: %1101
+       BMI     SKIP        *6B00   Condition: %1011
+       BNE     SKIP        *6600   Condition: %0110
+       BPL     SKIP        *6A00   Condition: %1010
+       BVC     SKIP        *6800   Condition: %1000
+       BVS     SKIP        *6900   Condition: %1001
+       BRA     SKIP        *6000   Condition: %0000
+
+
+* All have been tested.
+       AND.W    D1,D2
+       BTST     D1,#4
+       LSL.W    D1,D2
+       LSR.W    D1,D2
+       ASL.W    D1,D2
+       ASR.W    D1,D2
+       ROL.W    D1,D2
+       ROR.W    D1,D2
+       LSL.W    $0
+       LSR.W    $0
+       ASL.W    $0
+       ASR.W    $0
+       ROL.W    $0
+       ROR.W    $0
+
+       OR.L     D1,D0
+       SUB.L    D0,D1
+       CMP.W    D1,D2
        BTST     #0,D1
        BTST     #0,(A6)
+       BRA      SKIP
        BTST     #0,(A5)+
        MOVE.W   D0,D1
        MOVEA.L  A0,A1
@@ -35,46 +77,9 @@ START:                  ; first instruction of program
        ADDQ.B   #1,D0
        MOVEQ.L  #1,D1
        DIVU.W   D1,D0
-       OR.L     D1,D0
-       SUB.L    D0,D1
-       CMP.W    D1,D2
+       
 
-* All have been tested.      
-       ADD.W    D1,D2
-       ADDA.L   A1,A2
-       MULS.W   D1,D2
-       AND.W    D1,D2
-       BTST     D1,#4
-       LSL.W    D1,D2
-       LSR.W    D1,D2
-       ASL.W    D1,D2
-       ASR.W    D1,D2
-       ROL.W    D1,D2
-       ROR.W    D1,D2
-       LSL.W    $0
-       LSR.W    $0
-       ASL.W    $0
-       ASR.W    $0
-       ROL.W    $0
-       ROR.W    $0
 
-* All have been tested.
-       NOP
-       BCC     SKIP        *6400   Condition: %0100
-       BCS     SKIP        *6500   Condition: %0101
-       BEQ     SKIP        *6700   Condition: %0111
-       BGE     SKIP        *6C00   Condition: %1100
-       BGT     SKIP        *6E00   Condition: %1110
-       BHI     SKIP        *6200   Condition: %0010
-       BLE     SKIP        *6F00   Condition: %1111
-       BLS     SKIP        *6300   Condition: %0011
-       BLT     SKIP        *6D00   Condition: %1101
-       BMI     SKIP        *6B00   Condition: %1011
-       BNE     SKIP        *6600   Condition: %0110
-       BPL     SKIP        *6A00   Condition: %1010
-       BVC     SKIP        *6800   Condition: %1000
-       BVS     SKIP        *6900   Condition: %1001
-       BRA     SKIP        *6000   Condition: %0000
                 
 SKIP                                  
     MOVE.L  #$1000,A2       *Starting addres for code to be disassembled.
@@ -109,6 +114,10 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     LEA     MOVE_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11111111,D7           *Valid modes for this OPCode (SourceEA).
+    JSR     EFF_ADDR_MODE_REG       *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 BIN_0000_FOURTH  *Possibilities are ADDI and BTST.
     BTST    #11,D1
@@ -119,6 +128,10 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     LEA     ADDI_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 BIN_01_THIRD    *Possibilities are MOVEQ, MOVEM, ADDQ, LEA, CLR, Bcc, and JSR.
     MOVE.W  D1,D2
@@ -143,6 +156,10 @@ CLR_SECT
     LEA     CLR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP           
     
 BIN_011_FOURTH  *Possibilities are Bcc and MOVEQ.
@@ -287,7 +304,20 @@ OR_SECT         *Output the message 'OR.'.
     LEA     OR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    BTST    #8,D1
+    BNE     OR_DN_EA
+OR_EA_DN                        *This is ADD with the OPMode bieng <ea> -> Dn
+    MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP 
+OR_DN_EA                        *This is ADD with the OPMode bieng Dn -> <ea>
+    MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JMP     RELOOP
     
 BIN_11_THIRD    *Possibilities are ADD, ADDA, MULS, AND, LSL, LSR, ASR, ASL, ROL, and ROR.
     BTST    #13,D1
@@ -304,6 +334,19 @@ AND_SECT        *Output the message 'AND.'.
     LEA     AND_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    BTST    #8,D1
+    BNE     AND_DN_EA
+AND_EA_DN                   *This is ADD with the OPMode bieng <ea> -> Dn
+    MOVE.B  #%11111101,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JMP     RELOOP
+AND_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
+    MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 BIN_111_FOURTH  *Possibilities are LSL, LSR, ASR, ASL, ROL, and ROR. These can be register shifts or memory shifts.
 BIN_1110_FIFTH
@@ -342,6 +385,10 @@ ROR_SECT        *Output the message 'ROR.'.
     TRAP    #15
     JMP     RELOOP
 MEM_SHIFTS      *This is a memory shift.
+    MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     MOVE.W  D1,D2                  *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
     AND.W   #%0000011000000000,D2   *Significant bits for determining what kind of shift.
     CMP.W   #%0000001000000000,D2   *Compare with the shift with the middle value in the range.
@@ -358,11 +405,29 @@ ADD_SECT
     LEA     ADD_MESS,A1     *Outputs the message 'ADD.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    BTST    #8,D1
+    BNE     ADD_DN_EA
+ADD_EA_DN                   *This is ADD with the OPMode bieng <ea> -> Dn
+    MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
+ADD_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
+    MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JMP     RELOOP
+
 ADDA_SECT
     LEA     ADDA_MESS,A1    *Outputs the message 'ADDA.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 NOP_SECT                    *Outputs the message 'NOP'.
     LEA     NOP_MESS,A1 
@@ -378,41 +443,95 @@ CMP_SECT                    *Outputs the message 'CMP.'.
     LEA     CMP_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP     
 SUB_SECT                    *Outputs the message 'SUB.'.
     LEA     SUB_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP          
+    BTST    #8,D1
+    BNE     SUB_DN_EA
+SUB_EA_DN                   *This is ADD with the OPMode bieng <ea> -> Dn
+    MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JMP     RELOOP  
+SUB_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
+    MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JMP     RELOOP
+        
 DIVU_SECT                   *Outputs the message 'DIVU.'.
     LEA     DIVU_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11111101,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP 
 MOVEA_SECT
     LEA     MOVEA_MESS,A1   *Outputs the message 'MOVEA.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11111111,D7       *Valid modes for this OPCode(SourceEA).
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP    
 ADDQ_SECT     
     LEA     ADDQ_MESS,A1    *Outputs the message 'ADDQ.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11110111,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity 
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP 
 MOVEM_SECT       
+    BTST    #10,D1
+    BNE     MOVEM_MEM_REG
+MOVEM_REG_MEM               *Direction of transfer is register to memory.
     LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11100100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JMP     RELOOP 
+MOVEM_MEM_REG               *Direction of transfer is memory to register.
+    LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
+    MOVE.B  #14,D0      
+    TRAP    #15
+    MOVE.B  #%11010100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP 
 JSR_SECT    
     LEA     JSR_MESS,A1     *Outputs the message 'JSR'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11000100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 LEA_SECT
     LEA     LEA_MESS,A1     *Outputs the message 'LEA'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11000100,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 MOVEQ_SECT
     LEA     MOVEQ_MESS,A1   *Output the message 'MOVEQ.'.
@@ -423,6 +542,10 @@ MULS_SECT
     LEA     MULS_MESS,A1    *Output the message 'MULS.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.B  #%11111101,D7       *Valid modes for this OPCode.
+    JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
 LSL_SECT                    *Output the message 'LSL.'.
     LEA     LSL_MESS,A1
@@ -448,8 +571,10 @@ BTST_STATIC_SECT
     LEA     BTST_MESS,A1
     MOVE.B  #14,D0
     TRAP    #15
-    MOVE.B  #%10110111,D7       *Valid modes for this OPCode.
+    MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     BTST    #0,D3
     BNE     PRINT_VALID_BTST_STATIC
     JSR     PRINT_INVALID_OPCODE
@@ -458,9 +583,10 @@ BTST_DYNAMIC_SECT
     LEA     BTST_MESS,A1
     MOVE.B  #14,D0
     TRAP    #15
-    MOVE.B  #%10111111,D7       *Valid modes for this OPCode.
+    MOVE.B  #%11111101,D7       *Valid modes for this OPCode.
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
-
+    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP              *Reiterate to beginning of disassembler.
 DUMMY_SUB
     RTS
@@ -468,6 +594,7 @@ DUMMY_SUB
 
 *Bits stored in D7 represent the valid modes in the current opcode being disassembled.
                                                     *Bit set means valid for that mode.
+                                                    
 *Data Register Direct                               %00000001
 *Address Register Direct                            %00000010
 *Address Register Indirect                          %00000100
@@ -500,7 +627,7 @@ MODE_ADDR_INDIR
     BRA     INVALID_MODE            *Else, goto case for invalid mode.
 MODE_1
     BTST    #4,D1
-    BNE     MODE_10
+    BNE     MODE_11
 MODE_10
     BTST    #3,D1
     BNE     INVALID_MODE
@@ -591,7 +718,7 @@ VALID_MODE_0                         *Options are Dn, (An), or (An)+
     MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
-
+    
     JMP     RELOOP
 
      *********************Incomplete, does not print out address register number, or closed bracket
@@ -611,7 +738,7 @@ PRINT_INVALID_OPCODE
     LEA     INVALID_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
-    RTS
+    JMP     RELOOP
     
 DIS_END
             SIMHALT             ; halt simulator
@@ -700,6 +827,8 @@ INDIRECT_ADDR_MESS DC.B '(A',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
