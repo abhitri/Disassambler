@@ -12,6 +12,14 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
    
     ORG     $1000
 START:                  ; first instruction of program
+
+*Testing Code
+       BTST     #0,D1
+       BTST     #6,(A6)
+       BTST     #12,(A5)+
+       BTST     #3,-(A4)
+       BTST     #2,$1234
+       BTST     #7,$12341234
 * All have been tested.      
        ADD.W    D1,D2
        ADDA.L   A1,A2
@@ -778,9 +786,6 @@ PRINT_VALID_BTST_STATIC
     LEA     POUND,A1                *Load and print a #, this is specific to this particular mode
     TRAP    #15
     
-    *Need to get number still, this will print everything except number and data register ATM
-    
-    
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
     
     
@@ -797,6 +802,64 @@ PRINT_VALID_BTST_STATIC
     TRAP    #15
     BTST    #5,D1
     BEQ     VALID_MODE_0
+    
+    BRA     VALID_MODE_1 
+    JMP     RELOOP
+
+VALID_MODE_1     *Options here are                 
+    BTST    #4,D1
+    BNE     VALID_MODE_11
+    
+    *Bit mode here is 10, which means the full code is 100 or -(An)
+    MOVE.B  #'-',D1                 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0                   *Picking TRAP task #6. 
+    TRAP    #15                     *Output individual character.
+   
+    MOVE.B  #'(',D1                 *Begin printing of the (An) part
+    TRAP    #15
+    MOVE.B  #'A',D1
+    TRAP    #15
+    
+    MOVE.W  D4,D1                    *Copy original values back into D1
+              
+    MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
+    LSL.L   D6,D1                    
+    LSR.L   D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    MOVE.B  #')',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    
+    JMP     RELOOP
+VALID_MODE_11    
+    MOVE.B  #'$',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.W  D4,D1
+    BTST    #0,D1
+    BNE     VALID_MODE_111_LONG
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+
+    MOVE.W  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    
+    MOVE.W  D4,D1                    *Copy original values back into D1
+    JMP     RELOOP
+VALID_MODE_111_LONG
+    MOVE.L  (A2)+,D6
+    MOVE.L  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15
+    
     
     JMP     RELOOP
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
@@ -816,11 +879,26 @@ VALID_MODE_0                         *Options are Dn, (An), or (An)+
     
     JMP     RELOOP
 
-     *********************Incomplete, does not print out address register number, or closed bracket
 VALID_MODE_01    
     LEA     INDIRECT_ADDR_MESS,A1
     MOVE.B  #14,D0
     TRAP    #15
+    
+    
+    MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
+    LSL.L   D6,D1                    *Shift bits to isolate register number
+    LSR.L   D6,D1                    *Shift bits back to position so we can get the number
+    CLR.L   D2                       *Make sure D2 is clear
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    
+    
+    MOVE.B   #')',D1                 *Setting value in D1 to literal value for a space character.
+    MOVE.B   #6,D0                   *Picking TRAP task #6. 
+    TRAP     #15                     *Output individual character.
+    MOVE.W  D4,D1                    *Copy original values back into D1
     BTST    #3,D1
     BNE     VALID_MODE_011 
     JMP     RELOOP
@@ -925,6 +1003,10 @@ INDIRECT_ADDR_MESS DC.B '(A',0
 
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
