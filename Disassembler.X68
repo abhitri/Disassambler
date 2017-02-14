@@ -24,7 +24,9 @@ START:                  ; first instruction of program
        BTST     D3,#4
 * All have been tested.      
        ADD.L    D1,D2
-       ADD.W    D1,D2
+       ADD.B    D5,D7
+       ADD.W    D3,D4
+       ADD.L    #34,D6
        ADDA.L   A1,A2
        MULS.W   D1,D2
 
@@ -723,14 +725,13 @@ BTST_DYNAMIC_VALID
 PRINT_OPMODE_ADD_EA_DN
     BTST    #7,D1
     BNE     OPMODE_ADD_EA_DN_TEST_LONG
-    
-    
-    RTS
-OPMODE_ADD_EA_DN_TEST_LONG
     BTST    #6,D1
-    BNE     PRINT_INVALID_OPCODE
-    MOVE.W  D1,D4
-    MOVE.B  #'L',D1
+    BNE     OPMODE_ADD_EA_DN_TEST_WORD
+    JMP     OPMODE_ADD_EA_DN_TEST_BYTE
+
+OPMODE_ADD_EA_DN_TEST_WORD
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'W',D1
     MOVE.B  #6,D0
     TRAP    #15
     
@@ -738,11 +739,11 @@ OPMODE_ADD_EA_DN_TEST_LONG
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.W  D4,D1
-    *This is incomplete, it will jump and print the EA, but it doesn't come back
-    *Validated modes need to be made into subroutines
+
+
     BTST    #5,D1
     
-    BEQ     VALID_MODE_0_JSR
+    BEQ     VALID_MODE_0_ADD_EA_DN
     JSR     VALID_MODE_1
     
     MOVE.B  #',',D1
@@ -751,6 +752,163 @@ OPMODE_ADD_EA_DN_TEST_LONG
     MOVE.W  D4,D1
     JMP     RELOOP
 
+
+
+OPMODE_ADD_EA_DN_TEST_BYTE
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'B',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_ADD_EA_DN
+    JSR     VALID_MODE_1
+    
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
+
+    
+OPMODE_ADD_EA_DN_TEST_LONG
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_ADD_EA_DN
+    JSR     VALID_MODE_1
+    
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
+VALID_MODE_0_ADD_EA_DN
+    JSR     VALID_MODE_0
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #'D',D1
+    TRAP    #15
+    MOVE.W  D4,D1
+    JSR     DN_REGISTER
+    JMP     RELOOP
+    
+DN_REGISTER
+    BTST    #11,D1
+    BNE     DN_REGISTER_1
+    BTST    #10,D1
+    BNE     DN_REGISTER_01
+    BTST    #9,D1
+    BNE     DN_REGISTER_001
+       
+    *If it passes all tests, it is D0
+    MOVE.B  #'0',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS
+
+
+DN_REGISTER_1
+    BTST    #10,D1
+    BEQ     DN_REGISTER_10
+    BTST    #9,D1
+    BEQ     DN_REGISTER_110
+       
+    *If it passes all tests, it is D7
+    MOVE.B  #'7',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS
+DN_REGISTER_10
+       
+       
+    BTST   #9,D1
+    BNE    DN_REGISTER_101
+    
+    *Register is D4
+    MOVE.B  #'4',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS
+    
+DN_REGISTER_110
+    *Register is D6
+
+    MOVE.B  #'6',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS
+
+
+ 
+DN_REGISTER_101
+    *Register is D5
+    MOVE.B  #'5',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS
+   
+DN_REGISTER_01 
+    BTST   #9,D1
+    BNE    DN_REGISTER_011
+    
+    *Register is D2
+    MOVE.B  #'2',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS
+    
+DN_REGISTER_011                                  *Data register is D3      
+    MOVE.B  #'3',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS
+    
+    
+    
+DN_REGISTER_001
+    *If it passes all tests, it is D1
+    MOVE.B  #'1',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.W  D4,D1
+    RTS        
 *Bits stored in D7 represent the valid modes in the current opcode being disassembled.
                                                     *Bit set means valid for that mode.
                                                     
@@ -1199,6 +1357,11 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
