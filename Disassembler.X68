@@ -23,6 +23,7 @@ START:                  ; first instruction of program
        BTST     D2,D7
        BTST     D3,#4
 * All have been tested.      
+       ADD.L    D1,D2
        ADD.W    D1,D2
        ADDA.L   A1,A2
        MULS.W   D1,D2
@@ -501,6 +502,8 @@ ADD_EA_DN                   *This is ADD with the OPMode bieng <ea> -> Dn
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_ADD_EA_DN
+    
     JMP     RELOOP
 ADD_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
     MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
@@ -716,6 +719,38 @@ BTST_DYNAMIC_VALID
     CLR.L   D5
     JMP     PRINT_VALID_BTST_DYNAMIC
     JMP     RELOOP
+
+PRINT_OPMODE_ADD_EA_DN
+    BTST    #7,D1
+    BNE     OPMODE_ADD_EA_DN_TEST_LONG
+    
+    
+    RTS
+OPMODE_ADD_EA_DN_TEST_LONG
+    BTST    #6,D1
+    BNE     PRINT_INVALID_OPCODE
+    MOVE.W  D1,D4
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+    *This is incomplete, it will jump and print the EA, but it doesn't come back
+    *Validated modes need to be made into subroutines
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_JSR
+    JSR     VALID_MODE_1
+    
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
 *Bits stored in D7 represent the valid modes in the current opcode being disassembled.
                                                     *Bit set means valid for that mode.
                                                     
@@ -728,8 +763,7 @@ BTST_DYNAMIC_VALID
 *Absolute Long Address                              %01000000
 *Absolute Word Address                              %10000000
      
-EFF_ADDR_MODE_REG       *Modifies D2 and D3.
-    *MOVE.W  $1234,D1   
+EFF_ADDR_MODE_REG       *Modifies D2 and D3.   
     BTST    #5,D1
     BNE     MODE_1
 MODE_0      *Possibilities are Dn, An, (An), (AN)+
@@ -870,9 +904,18 @@ CLR_SIZE_1
 PRINT_VALID_BTST_DYNAMIC
     MOVE.W  D4,D1
     BTST    #5,D1
-    BEQ     VALID_MODE_0
+    BEQ     VALID_MODE_0_JSR
     
-    BRA     VALID_MODE_1 
+    JSR     VALID_MODE_1 
+    JMP     RELOOP
+
+
+
+
+
+*This label needs to be reavaluated, we want to be able to jump back to where we were previously
+VALID_MODE_0_JSR
+    JSR     VALID_MODE_0
     JMP     RELOOP
 PRINT_VALID_BTST_STATIC
     LEA     SPACE,A1                *Print a space to separate BTST with the addressing mode
@@ -896,9 +939,9 @@ PRINT_VALID_BTST_STATIC
     LEA     COMMA,A1
     TRAP    #15
     BTST    #5,D1
-    BEQ     VALID_MODE_0
+    BEQ     VALID_MODE_0_JSR
     
-    BRA     VALID_MODE_1 
+    JSR     VALID_MODE_1 
     JMP     RELOOP
 
 VALID_MODE_1     *Options here are                 
@@ -930,7 +973,8 @@ VALID_MODE_1     *Options here are
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
-    JMP     RELOOP
+    
+    RTS
 VALID_MODE_11    
     BTST    #2,D1
     BNE     VALID_MODE_111_POUND
@@ -949,7 +993,7 @@ VALID_MODE_11
     TRAP    #15           *Print out the Addr1 value in hexadecimal format
     
     MOVE.W  D4,D1                    *Copy original values back into D1
-    JMP     RELOOP
+    RTS
     
 VALID_MODE_111_POUND
     MOVE.B  #'#',D1
@@ -965,7 +1009,7 @@ VALID_MODE_111_POUND
     TRAP    #15           *Print out the Addr1 value in hexadecimal format
     
     MOVE.W  D4,D1                    *Copy original values back into D1
-    JMP     RELOOP
+    RTS
 VALID_MODE_111_LONG
     MOVE.L  (A2)+,D6
     MOVE.L  D6,D1
@@ -974,7 +1018,7 @@ VALID_MODE_111_LONG
     TRAP    #15
     CLR.L   D1
     
-    JMP     RELOOP
+    RTS
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
     BTST    #4,D1
     BNE     VALID_MODE_01  
@@ -995,7 +1039,7 @@ VALID_MODE_0                         *Options are Dn, (An), or (An)+
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
-    JMP     RELOOP
+    RTS
 
 VALID_MODE_01    
     LEA     INDIRECT_ADDR_MESS,A1
@@ -1019,7 +1063,7 @@ VALID_MODE_01
     MOVE.W  D4,D1                    *Copy original values back into D1
     BTST    #3,D1
     BNE     VALID_MODE_011 
-    JMP     RELOOP
+    RTS
 
 VALID_MODE_001
     MOVE.B  #'A',D1
@@ -1036,13 +1080,13 @@ VALID_MODE_001
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
-    JMP     RELOOP
+    RTS
 
 VALID_MODE_011
     LEA     PLUS,A1
     MOVE.B  #14,D0
     TRAP    #15
-    JMP     RELOOP
+    RTS
 PRINT_INVALID_OPCODE
     LEA     INVALID_MESS,A1 
     MOVE.B  #14,D0      
