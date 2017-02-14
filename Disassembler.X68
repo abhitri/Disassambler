@@ -21,6 +21,7 @@ START:                  ; first instruction of program
        BTST     #2,$1234
        BTST     #7,$12341234
        BTST     D2,D7
+       BTST     D3,#4
 * All have been tested.      
        ADD.W    D1,D2
        ADDA.L   A1,A2
@@ -931,6 +932,8 @@ VALID_MODE_1     *Options here are
     
     JMP     RELOOP
 VALID_MODE_11    
+    BTST    #2,D1
+    BNE     VALID_MODE_111_POUND
     MOVE.B  #'$',D1
     MOVE.B  #6,D0
     TRAP    #15
@@ -938,6 +941,22 @@ VALID_MODE_11
     MOVE.W  D4,D1
     BTST    #0,D1
     BNE     VALID_MODE_111_LONG
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+
+    MOVE.W  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    
+    MOVE.W  D4,D1                    *Copy original values back into D1
+    JMP     RELOOP
+    
+VALID_MODE_111_POUND
+    MOVE.B  #'#',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.W  D4,D1
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
 
     MOVE.W  D6,D1
@@ -959,7 +978,9 @@ VALID_MODE_111_LONG
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
     BTST    #4,D1
     BNE     VALID_MODE_01  
-    *The addresing mode is 000, because there is no other options for the mode to have two 0's
+    BTST    #0,D1
+    BEQ     VALID_MODE_001
+    
     MOVE.B  #'D',D1
     MOVE.B  #6,D0
     TRAP    #15                   
@@ -999,6 +1020,24 @@ VALID_MODE_01
     BTST    #3,D1
     BNE     VALID_MODE_011 
     JMP     RELOOP
+
+VALID_MODE_001
+    MOVE.B  #'A',D1
+    MOVE.B  #6,D0
+    TRAP    #15                   
+    
+    MOVE.W  D4,D1  
+    MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
+    LSL.L   D6,D1                    
+    LSR.L   D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    
+    JMP     RELOOP
+
 VALID_MODE_011
     LEA     PLUS,A1
     MOVE.B  #14,D0
@@ -1112,6 +1151,10 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Tab type~1~
 *~Tab size~4~
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
