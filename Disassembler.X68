@@ -20,6 +20,7 @@ START:                  ; first instruction of program
        BTST     #3,-(A4)
        BTST     #2,$1234
        BTST     #7,$12341234
+       BTST     D2,D7
 * All have been tested.      
        ADD.W    D1,D2
        ADDA.L   A1,A2
@@ -623,11 +624,38 @@ BTST_DYNAMIC_SECT
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    BRA     BTST_DYNAMIC_VALID
+    
     JMP     RELOOP              *Reiterate to beginning of disassembler.
 DUMMY_SUB
     RTS
     
-
+BTST_DYNAMIC_VALID
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+    MOVE.B   #' ',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    TRAP     #15     *Output individual character.
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+    
+    MOVE.B   #',',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    TRAP     #15     *Output individual character.
+    
+    
+    CLR.L   D5
+    JMP     PRINT_VALID_BTST_DYNAMIC
+    JMP     RELOOP
 *Bits stored in D7 represent the valid modes in the current opcode being disassembled.
                                                     *Bit set means valid for that mode.
                                                     
@@ -778,7 +806,14 @@ CLR_SIZE_1
     BTST    D4,D1                   *Test the second bit for the size.
     BNE     INVALID_SIZE            *If it's a 1, then it is an invalid operation.
     BRA     SIZE_LONG_OPERATION
+
+PRINT_VALID_BTST_DYNAMIC
+    MOVE.W  D4,D1
+    BTST    #5,D1
+    BEQ     VALID_MODE_0
     
+    BRA     VALID_MODE_1 
+    JMP     RELOOP
 PRINT_VALID_BTST_STATIC
     LEA     SPACE,A1                *Print a space to separate BTST with the addressing mode
     MOVE.B  #14,D0
@@ -859,15 +894,18 @@ VALID_MODE_111_LONG
     MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
     MOVE.B  #16,D2        *Set the base to 16
     TRAP    #15
-    
+    CLR.L   D1
     
     JMP     RELOOP
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
     BTST    #4,D1
-    BNE     VALID_MODE_01
+    BNE     VALID_MODE_01  
     *The addresing mode is 000, because there is no other options for the mode to have two 0's
-    LEA     D_REGISTER_MESS,A1       *The only option here is a Dn
-    TRAP    #15                      
+    MOVE.B  #'D',D1
+    MOVE.B  #6,D0
+    TRAP    #15                   
+    
+    MOVE.W  D4,D1  
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    
     LSR.L   D6,D1
@@ -976,6 +1014,9 @@ CLOSE_PAREN     DC.B    ')',0
 A_REGISTER_MESS DC.B    'A',0
 D_REGISTER_MESS DC.B    'D',0
 INDIRECT_ADDR_MESS DC.B '(A',0
+MESSAGE1 DC.B 'Please enter a starting address for your program',0
+MESSAGE2 DC.B 'Please enter an ending address for your program',0
+
 
 
 * Put variables and constants here
@@ -1007,6 +1048,11 @@ INDIRECT_ADDR_MESS DC.B '(A',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
