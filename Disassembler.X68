@@ -22,6 +22,22 @@ START:                  ; first instruction of program
        BTST     #7,$12341234
        BTST     D2,D7
        BTST     D3,#4
+       
+       ADD.L    D1,D2
+       ADD.B    D5,D7
+       ADD.W    D3,D4
+       ADD.L    #34,D6
+       ADDA.L   A1,A2
+       MULS.W   D1,D2
+       
+       ADDI.L   #9,D1
+       ADDI.W   #4,D1
+       ADDI.B   #4,D1
+       ADDI.W   #8,D1
+       ADDI.W   #9,D1
+       ADDI.B   #8,D1
+       ADDI.B   #9,D1
+       ADDI.B   #127,D1
 * All have been tested.      
        ADD.L    D1,D2
        ADD.B    D5,D7
@@ -216,7 +232,67 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    
+    JSR     ADD_SIZE  
+    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  #'#',D1 *Setting value in D1 to literal value for a space character.
+    TRAP    #15   
+    
+
+    MOVE.L  D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2
+    MOVE.B  #15,D0
+    TRAP    #15
+
+    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  D4,D1
+    BTST    #5,D1
+    BNE     VALID_MODE_1
+    JMP     VALID_MODE_0
+    
     JMP     RELOOP
+    
+ADD_SIZE
+    BTST    #7,D1
+    BNE     ADD_SIZE_LONG
+    BTST    #6,D1
+    BNE     ADD_SIZE_WORD
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'B',D1 *Setting value in D1 to literal value for a B character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  (A2)+,D6
+    
+    
+    RTS
+    
+    
+ADD_SIZE_WORD
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1 *Setting value in D1 to literal value for a W character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.W  (A2)+,D6
+
+
+    RTS    
+    
+ADD_SIZE_LONG
+    CLR.L   D4
+    MOVE.L  D1,D4
+    MOVE.B  #'L',D1 *Setting value in D1 to literal value for a L character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.L  (A2)+,D6
+
+    RTS
+    
 BIN_01_THIRD    *Possibilities are MOVEQ, MOVEM, ADDQ, LEA, CLR, Bcc, and JSR.
     MOVE.W  D1,D2
     AND.W   #%1111111111110000,D2
@@ -1180,8 +1256,11 @@ VALID_MODE_111_LONG
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
     BTST    #4,D1
     BNE     VALID_MODE_01  
-    BTST    #0,D1
-    BEQ     VALID_MODE_001
+    JMP     VALID_MODE_00
+
+VALID_MODE_00
+    BTST    #3,D1
+    BNE     VALID_MODE_001
     
     MOVE.B  #'D',D1
     MOVE.B  #6,D0
@@ -1198,7 +1277,6 @@ VALID_MODE_0                         *Options are Dn, (An), or (An)+
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
     RTS
-
 VALID_MODE_01    
     LEA     INDIRECT_ADDR_MESS,A1
     MOVE.B  #14,D0
@@ -1330,38 +1408,6 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
-
-
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
-
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
