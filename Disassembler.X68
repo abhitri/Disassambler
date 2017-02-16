@@ -14,6 +14,9 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 *Testing Code
+        
+
+
        BTST     #0,D1
        BTST     #6,(A6)
        BTST     #12,(A5)+
@@ -30,13 +33,13 @@ START:                  ; first instruction of program
        ADDA.L   A1,A2
        MULS.W   D1,D2
        
-       ADDI.L   #9,D1
-       ADDI.W   #4,D1
-       ADDI.B   #4,D1
-       ADDI.W   #8,D1
-       ADDI.W   #9,D1
-       ADDI.B   #8,D1
-       ADDI.B   #9,D1
+       ADDI.L   #2,D1
+       ADDI.W   #4,D6
+       ADDI.B   #4,D7
+       ADDI.W   #8,D3
+       ADDI.W   #1,D2
+       ADDI.B   #8,D5
+       ADDI.B   #3,D1
        ADDI.B   #127,D1
 * All have been tested.      
        ADD.L    D1,D2
@@ -252,11 +255,13 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     TRAP    #15     *Output individual character.
     MOVE.B  D4,D1
     BTST    #5,D1
-    BNE     VALID_MODE_1
-    JMP     VALID_MODE_0
+    BNE     VALID_MODE_1_JSR
+    JSR     VALID_MODE_0
     
     JMP     RELOOP
-    
+VALID_MODE_1_JSR
+    JSR     VALID_MODE_1
+    JMP     RELOOP    
 ADD_SIZE
     BTST    #7,D1
     BNE     ADD_SIZE_LONG
@@ -267,7 +272,7 @@ ADD_SIZE
     MOVE.B  #'B',D1 *Setting value in D1 to literal value for a B character.
     MOVE.B  #6,D0   *Picking TRAP task #6. 
     TRAP    #15     *Output individual character.
-    MOVE.B  (A2)+,D6
+    MOVE.W  (A2)+,D6
     
     
     RTS
@@ -671,7 +676,77 @@ ADDQ_SECT
     JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
-    JMP     RELOOP 
+    MOVE.W  D1,D4
+    JSR     ADDQ_PRINT_ADDR_MODE
+    
+    MOVE.W  D1,D4
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15    
+    
+    MOVE.B  #'#',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    JSR     ADDQ_PRINT_DATA
+    
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1 
+    JMP     RELOOP
+
+ADDQ_PRINT_DATA
+    MOVE.L  #20,D7
+    LSL.L   D7,D1
+    MOVE.L  #29,D7
+    LSR.L   D7,D1
+    MOVE.L  #3,D0
+    CMP.W   #0,D1
+    BEQ     ADDQ_PRINT_8
+    
+    TRAP    #15
+    
+    
+
+    RTS
+ADDQ_PRINT_8
+    MOVE.B  #8,D1
+    TRAP    #15
+    RTS 
+ADDQ_PRINT_ADDR_MODE
+    BTST    #7,D1
+    BNE     ADDQ_PRINT_ADDR_MODE_LONG
+    BTST    #6,D1
+    BNE     ADDQ_PRINT_ADDR_MODE_WORD
+    
+
+    MOVE.B  #'B',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    RTS
+    
+    JMP     RELOOP
+ADDQ_PRINT_ADDR_MODE_WORD
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    RTS
+
+ADDQ_PRINT_ADDR_MODE_LONG
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    RTS
 MOVEM_SECT       
     BTST    #10,D1
     BNE     MOVEM_MEM_REG
@@ -1408,6 +1483,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
