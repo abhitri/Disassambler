@@ -16,7 +16,13 @@ START:                  ; first instruction of program
 *Testing Code
         
 
-
+       ADDA.L   A1,A2
+       ADDA.L   D1,A2
+       ADDA.L   #2,A2
+       ADDA.L   #223,A2
+       ADDA.W   A5,A7
+       ADDA.W   A2,A5
+       
        BTST     #0,D1
        BTST     #6,(A6)
        BTST     #12,(A5)+
@@ -601,9 +607,41 @@ ADDA_SECT
     TRAP    #15
     MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
-    BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
+    BTST    #0,D3                  *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     ADDA_PRINT_OPMODE
+    
+BTST    
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1 
     JMP     RELOOP
+    
+    
+    
+ADDA_PRINT_OPMODE
+    BTST    #8,D1
+    BNE     ADDA_PRINT_LONG
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1
+    TRAP    #15
+    MOVE.L  D4,D1
+    RTS
+ADDA_PRINT_LONG
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    RTS
 NOP_SECT                    *Outputs the message 'NOP'.
     LEA     NOP_MESS,A1 
     MOVE.B  #14,D0      
@@ -1484,6 +1522,10 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Tab type~1~
 *~Tab size~4~
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
