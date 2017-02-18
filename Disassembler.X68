@@ -15,7 +15,9 @@ START:                  ; first instruction of program
 
 *Testing Code
         
-
+       ADDA.L   #$11111111,A2
+       ADDA.L   #$1111,A2
+       ADDA.W   #223,A2
        ADDA.L   A1,A2
        ADDA.L   D1,A2
        ADDA.L   #2,A2
@@ -609,16 +611,86 @@ ADDA_SECT
     JSR     EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                  *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
-    JSR     ADDA_PRINT_OPMODE
     
+    JSR     ADDA_PRINT_OPMODE               *Print the opmode
+    
+    
+    JSR     ADDA_IMMEDIATE_ADDR_TEST        *Test to see if its immediate addressing, signaled with a #, if it is we need a different case
+    
+    
+    
+    JMP     RELOOP
+    
+    
+ADDA_IMMEDIATE_ADDR_TEST
+    BTST    #5,D1                           *Test if the first digit is 1
+    BEQ     ADDA_RETURN
+    BTST    #4,D1                           *Test if the second digit is 1
+    BEQ     ADDA_RETURN
+    BTST    #3,D1                           *Test if the third digit is 1 
+    BEQ     ADDA_RETURN                     
+    
+    *If test cases pass, then the mode = 111 and we need to pop a word or long based on the opcode
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'#',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #'$',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    BTST    #8,D1                           *Test the 8th bit to see if it is word addressed or long addressed
+    BEQ     ADDA_IMMEDIATE_WORD
+    
+    MOVE.L  (A2)+,D6                        *This gets the remaining word from the function
+    JMP     ADDA_PRINT_An   
+    
+    
+ADDA_IMMEDIATE_WORD
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+
+
+
+ADDA_PRINT_An
+    CLR.L   D2
+    MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
+    MOVE.L  D6,D1
+    CLR.L   D2
+    MOVE.B  #16,D2                          *Print immediate addressing number
+    MOVE.B  #15,D0
+    TRAP    #15
+    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1                           *Move orginial opcode back into D1
+    
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    RTS                                     *Return from sub-routine
+ 
+ADDA_RETURN
+    RTS
 BTST    
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     
     JSR     VALID_MODE_1 
     JMP     RELOOP
-    
-    
     
 ADDA_PRINT_OPMODE
     BTST    #8,D1
@@ -629,10 +701,11 @@ ADDA_PRINT_OPMODE
     TRAP    #15
     MOVE.B  #' ',D1
     TRAP    #15
+    
+    
     MOVE.L  D4,D1
     RTS
 ADDA_PRINT_LONG
-    
     MOVE.L  D1,D4
     MOVE.B  #'L',D1
     MOVE.B  #6,D0
@@ -640,6 +713,7 @@ ADDA_PRINT_LONG
     MOVE.B  #' ',D1
     TRAP    #15
     MOVE.L  D4,D1
+
     
     RTS
 NOP_SECT                    *Outputs the message 'NOP'.
@@ -1526,6 +1600,11 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
