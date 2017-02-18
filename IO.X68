@@ -1,7 +1,7 @@
 *-----------------------------------------------------------
 * Title      : Disassembler 
 * Written by : Abhi Trivedi
-* Date       : 02/10/2017
+* Date       : 02/17/2017
 * Description: I/O part of the code 
 *-----------------------------------------------------------
     ORG    $1000
@@ -61,6 +61,11 @@ NUMBER        CMP.B     #$0039,D0
 STRINGEND     MOVE.L    D3,D4
 
 
+CHECKADDRESS MOVE.B    (A1),D1
+             MOVE.B    (A2),D2
+             CMP.B      D2,D1
+             BGT        ERRORMESSAGE
+ 
              LEA MESSAGE2,A2
              MOVE.B  #14,D0
              TRAP    #15
@@ -74,6 +79,7 @@ STRINGEND     MOVE.L    D3,D4
         
 MESSAGE1 DC.B 'Please enter a starting address for your program',0
 MESSAGE2 DC.B 'Please enter an ending address for your program',0
+ERRORMESSAGE    DC.B 'Your ending address is greater than the starting address', 0
 
 * Put program code here
 
@@ -82,6 +88,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 * Put variables and constants here
 
     END    START        ; last line of source
+
 
 
 
