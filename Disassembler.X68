@@ -694,8 +694,8 @@ ADDA_PRINT_An
  
 ADDA_RETURN
     BTST    #5,D1    
-    JSR     VALID_MODE_0_JSR
-    JMP     VALID_MODE_1
+    BEQ     VALID_MODE_0_JSR
+    JSR     VALID_MODE_1
     
     RTS
     
