@@ -694,11 +694,14 @@ ADDA_PRINT_An
  
 ADDA_RETURN
     BTST    #5,D1    
-    BEQ     VALID_MODE_0_JSR
+    BEQ     ADDA_VALID_MODE_0_JSR
     JSR     VALID_MODE_1
     
+    RTS     
+ADDA_VALID_MODE_0_JSR
+    JSR     VALID_MODE_0
+    JMP     ADDA_PRINT_An
     RTS
-    
 BTST    
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
@@ -1609,17 +1612,6 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
