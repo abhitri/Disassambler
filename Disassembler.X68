@@ -617,7 +617,7 @@ ADDA_SECT
     
     JSR     ADDA_IMMEDIATE_ADDR_TEST        *Test to see if its immediate addressing, signaled with a #, if it is we need a different case
     
-    
+
     
     JMP     RELOOP
     
@@ -645,15 +645,7 @@ ADDA_IMMEDIATE_ADDR_TEST
     BEQ     ADDA_IMMEDIATE_WORD
     
     MOVE.L  (A2)+,D6                        *This gets the remaining word from the function
-    JMP     ADDA_PRINT_An   
     
-    
-ADDA_IMMEDIATE_WORD
-    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
-
-
-
-ADDA_PRINT_An
     CLR.L   D2
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
@@ -661,6 +653,23 @@ ADDA_PRINT_An
     MOVE.B  #16,D2                          *Print immediate addressing number
     MOVE.B  #15,D0
     TRAP    #15
+    
+    JMP     ADDA_PRINT_An   
+    
+    
+ADDA_IMMEDIATE_WORD
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+    CLR.L   D2
+    MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
+    MOVE.L  D6,D1
+    CLR.L   D2
+    MOVE.B  #16,D2                          *Print immediate addressing number
+    MOVE.B  #15,D0
+    TRAP    #15
+
+
+ADDA_PRINT_An
+
     MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
@@ -684,7 +693,12 @@ ADDA_PRINT_An
     RTS                                     *Return from sub-routine
  
 ADDA_RETURN
+    BTST    #5,D1    
+    JSR     VALID_MODE_0_JSR
+    JMP     VALID_MODE_1
+    
     RTS
+    
 BTST    
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
@@ -1604,6 +1618,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 *~Font name~Courier New~
 *~Font size~10~
