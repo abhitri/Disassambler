@@ -181,7 +181,7 @@ STRINGEND     MOVE.L    D3,D4
              BRA     RELOOP
                 
 SKIP                                  
-    MOVE.L  #$1000,A2       *Starting addres for code to be disassembled.
+    MOVE.L  #$1000,A2       *Starting address for code to be disassembled.
     MOVE.L  #$2000,A3
 RELOOP
     CMP.L   A2,A3
@@ -235,11 +235,11 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     LEA     ADDI_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
-    MOVE.W  D1,D3               *Copy OPCode into D3 in order to allow for isolation of bits.
+    MOVE.W  D1,D3                   *Copy OPCode into D3 in order to allow for isolation of bits.
     AND.W   #%1111111100000000,D3
     CMP.W   #%0000011000000000,D3
     BNE     PRINT_INVALID_OPCODE
-    MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
+    MOVE.B  #%11110101,D7           *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -341,6 +341,10 @@ CLR_SECT
     JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111111100000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0100001000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JMP     RELOOP           
     
 BIN_011_FOURTH  *Possibilities are Bcc and MOVEQ.
@@ -349,6 +353,10 @@ BIN_011_FOURTH  *Possibilities are Bcc and MOVEQ.
 *Condition Section.**********************************************
 
 B_COND_SECT     *It has been determined to be a Conditional Branch. Now to determine the condition.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0110000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     BTST    #11,D1          
     BNE     Bcc_1_SECT
 Bcc_0_SECT      *First bit of condition is 0.
@@ -485,6 +493,10 @@ OR_SECT         *Output the message 'OR.'.
     LEA     OR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1000000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JSR     VALIDATE_OPMODE_FIELD   *Subroutine validates OPMode field of subroutine.
     BTST    #0,D3                   *Checking result of subroutine's check for valid OPMode.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -518,6 +530,10 @@ AND_SECT        *Output the message 'AND.'.
     LEA     AND_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1100000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JSR     VALIDATE_OPMODE_FIELD   *Subroutine validates OPMode field of subroutine.
     BTST    #0,D3                   *Checking result of subroutine's check for valid OPMode.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -596,6 +612,10 @@ ADD_SECT
     LEA     ADD_MESS,A1     *Outputs the message 'ADD.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1101000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JSR     VALIDATE_OPMODE_FIELD   *Subroutine validates OPMode field of subroutine.
     BTST    #0,D3                   *Checking result of subroutine's check for valid OPMode.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -620,6 +640,10 @@ ADDA_SECT
     LEA     ADDA_MESS,A1    *Outputs the message 'ADDA.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1101000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                  *Checking result of subroutine's check for valid final 6 bits.
@@ -766,6 +790,10 @@ CMP_SECT                    *Outputs the message 'CMP.'.
     LEA     CMP_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1011000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
@@ -779,6 +807,10 @@ SUB_SECT                    *Outputs the message 'SUB.'.
     LEA     SUB_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1001000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JSR     VALIDATE_OPMODE_FIELD   *Subroutine validates OPMode field of subroutine.
     BTST    #0,D3                   *Checking result of subroutine's check for valid OPMode.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -801,7 +833,11 @@ DIVU_SECT                   *Outputs the message 'DIVU.'.
     LEA     DIVU_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
-    MOVE.B  #%11111101,D7       *Valid modes for this OPCode.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000111000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1000000011000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+    MOVE.B  #%11111101,D7           *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -827,6 +863,10 @@ ADDQ_SECT
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000100000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0101000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     MOVE.B  #%11100111,D3           *Shift count of 7 for VALIDATE_SIZE and any size accepted.
     JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
@@ -913,6 +953,10 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111101110000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0100100010000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JMP     RELOOP 
 MOVEM_MEM_REG               *Direction of transfer is memory to register.
     LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
@@ -931,6 +975,10 @@ JSR_SECT
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111111111000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0100111010000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JMP     RELOOP
 LEA_SECT
     LEA     LEA_MESS,A1     *Outputs the message 'LEA'.
@@ -940,16 +988,28 @@ LEA_SECT
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000111000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0100000111000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JMP     RELOOP
 MOVEQ_SECT
     LEA     MOVEQ_MESS,A1   *Output the message 'MOVEQ.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000100000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0111000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     JMP     RELOOP
 MULS_SECT
     LEA     MULS_MESS,A1    *Output the message 'MULS.'.
     MOVE.B  #14,D0      
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000111000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1100000111000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     MOVE.B  #%11111101,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
@@ -979,6 +1039,14 @@ BTST_STATIC_SECT
     LEA     BTST_MESS,A1
     MOVE.B  #14,D0
     TRAP    #15
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111111111000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0000100000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+    MOVE.W  (A2),D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111111100000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0000000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
@@ -995,6 +1063,10 @@ BTST_DYNAMIC_SECT
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000111000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%0000000100000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     BRA     BTST_DYNAMIC_VALID
     
     JMP     RELOOP              *Reiterate to beginning of disassembler.
@@ -1683,6 +1755,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 *~Font name~Courier New~
 *~Font size~10~
