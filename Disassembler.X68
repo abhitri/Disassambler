@@ -15,7 +15,28 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 *Testing Code
-        
+       MOVE.B    D2,D3
+       MOVE.W    D1,D4
+       MOVE.L    D7,D3
+              
+       MOVE.L    #$123,D7
+
+       
+      
+       MOVE.B    #12,D3
+       MOVE.W    #123,D4
+       MOVE.L    #167,D3
+       
+       MOVE.B    #$12,D3
+       MOVE.W    #$123,D4
+       MOVE.L    #$167,D3
+    
+       MOVEM     (A5),D0-D1
+       MOVEQ     #1,D1
+       MOVEQ     #13,D1
+       MOVEQ     #3,D1
+       
+       
        *ADDA.L   #$11111111,A2
        *ADDA.L   #$1111,A2
        *ADDA.W   #223,A2
@@ -227,12 +248,76 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     JSR     VALIDATE_SIZE_MOVELIKE  *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid SIZE bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    
+    JSR     PRINT_ADDR_MODE_SIZE_BIT_13
+
+    BTST    #5,D1
+    BNE     MOVE_VALID_MODE_1_JSR
+    JSR     VALID_MODE_0
+    
+    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  D4,D1
+    
+    ****Testing****
+    BTST    #8,D1
+    BNE     VALID_MODE_SOURCE_DEST_1_JSR
+    JSR     VALID_MODE_SOURCE_DEST_0
+    
+    *MOVE.B  D4,D1
+    ****************
+    
     JMP     RELOOP
+VALID_MODE_SOURCE_DEST_1_JSR
+    JSR     VALID_MODE_SOURCE_DEST_1
+    JMP     RELOOP
+MOVE_VALID_MODE_1_JSR
+    JSR     VALID_MODE_1
+    JMP     RELOOP
+    
+PRINT_ADDR_MODE_SIZE_BIT_13    
+    MOVE.L  D1,D4
+    BTST    #13,D1
+    BEQ     PRINT_BYTE_OPERATION
+        
+    BTST    #12,D1
+    BEQ     PRINT_LONG_OPERATION
+    
+    *If we get here, the addressing mode is the word operation (.W).
+    
+    MOVE.B  #'W',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    JMP     PRINT_SPACE_RTS
+
+PRINT_BYTE_OPERATION
+    MOVE.B  #'B',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    JMP     PRINT_SPACE_RTS
+    
+PRINT_LONG_OPERATION
+    MOVE.B  #'L',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    JMP     PRINT_SPACE_RTS  
+
+PRINT_SPACE_RTS
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a space character.
+    TRAP    #15
+    MOVE.L  D4,D1
+    RTS
+    
 BIN_0000_FOURTH  *Possibilities are ADDI and BTST.
     BTST    #11,D1
     BNE     BTST_STATIC_SECT
     BTST    #8,D1
     BNE     BTST_DYNAMIC_SECT
+    
+
+    
 ADDI_SECT                   *Outputs the message 'ADDI.'.
     LEA     ADDI_MESS,A1 
     MOVE.B  #14,D0      
@@ -1556,9 +1641,6 @@ PRINT_VALID_BTST_DYNAMIC
     JMP     RELOOP
 
 
-
-
-
 *This label needs to be reavaluated, we want to be able to jump back to where we were previously
 VALID_MODE_0_JSR
     JSR     VALID_MODE_0
@@ -1735,6 +1817,163 @@ VALID_MODE_011
     MOVE.B  #14,D0
     TRAP    #15
     RTS
+    
+***************Testing*********************
+
+VALID_MODE_SOURCE_DEST_1     *Options here are                 
+    BTST    #7,D1
+    BNE     VALID_MODE_SOURCE_DEST_11
+    
+    *Bit mode here is 10, which means the full code is 100 or -(An)
+    MOVE.B  #'-',D1                 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0                   *Picking TRAP task #6. 
+    TRAP    #15                     *Output individual character.
+   
+    MOVE.B  #'(',D1                 *Begin printing of the (An) part
+    TRAP    #15
+    MOVE.B  #'A',D1
+    TRAP    #15
+    
+    MOVE.W  D4,D1                    *Copy original values back into D1
+              
+    MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
+    LSL.L   D6,D1                    
+    LSR.L   D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    MOVE.B  #')',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    
+    
+    RTS
+VALID_MODE_SOURCE_DEST_11    
+    BTST    #11,D1
+    BNE     VALID_MODE_SOURCE_DEST_111_POUND
+    MOVE.B  #'$',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.W  D4,D1
+    BTST    #9,D1
+    BNE     VALID_MODE_SOURCE_DEST_111_LONG
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+
+    MOVE.W  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    
+    MOVE.W  D4,D1                    *Copy original values back into D1
+    RTS
+    
+VALID_MODE_SOURCE_DEST_111_POUND
+    MOVE.B  #'#',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.W  D4,D1
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+
+    MOVE.W  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    
+    MOVE.W  D4,D1                    *Copy original values back into D1
+    RTS
+VALID_MODE_SOURCE_DEST_111_LONG
+    MOVE.L  (A2)+,D6
+    MOVE.L  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15
+    CLR.L   D1
+    
+    RTS
+VALID_MODE_SOURCE_DEST_0                         *Options are Dn, (An), or (An)+
+    BTST    #7,D1
+    BNE     VALID_MODE_SOURCE_DEST_01  
+    JMP     VALID_MODE_SOURCE_DEST_00
+
+VALID_MODE_SOURCE_DEST_00
+    BTST    #6,D1
+    BNE     VALID_MODE_SOURCE_DEST_001
+    MOVE.B  #'D',D1
+    MOVE.B  #6,D0
+    TRAP    #15                   
+    
+    MOVE.W  D4,D1  
+    MOVE.B  #20,D6                   *Set the bit shift to 20 so we can isolate the register number 
+    LSL.L   D6,D1                    
+    
+    MOVE.B  #29,D6                   *Set the bit shift to 25 now to shift register number all the way to the right
+    LSR.L   D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    
+    RTS
+VALID_MODE_SOURCE_DEST_01    
+    LEA     INDIRECT_ADDR_MESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    
+    MOVE.W  D4,D1  
+    MOVE.B  #20,D6                   *Set the bit shift to 20 so we can isolate the register number 
+    LSL.L   D6,D1                    
+    
+    MOVE.B  #29,D6                   *Set the bit shift to 25 now to shift register number all the way to the right
+    LSR.L   D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    
+    
+    MOVE.B   #')',D1                 *Setting value in D1 to literal value for a space character.
+    MOVE.B   #6,D0                   *Picking TRAP task #6. 
+    TRAP     #15                     *Output individual character.
+    MOVE.W  D4,D1                    *Copy original values back into D1
+    BTST    #6,D1
+    BNE     VALID_MODE_SOURCE_DEST_011 
+    RTS
+
+VALID_MODE_SOURCE_DEST_001
+    MOVE.B  #'A',D1
+    MOVE.B  #6,D0
+    TRAP    #15                   
+    
+    MOVE.W  D4,D1  
+    MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
+    LSL.L   D6,D1                    
+    LSR.L   D6,D1
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    
+    RTS
+
+VALID_MODE_SOURCE_DEST_011
+    LEA     PLUS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    RTS
+
+    
+
+*******************************************
+
 PRINT_INVALID_OPCODE
     LEA     INVALID_MESS,A1 
     MOVE.B  #14,D0      
@@ -1822,6 +2061,10 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Tab size~4~
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
