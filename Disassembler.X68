@@ -6,6 +6,7 @@
 *              
 *              
 *-----------------------------------------------------------
+
 NOP_CODE    EQU     %0100111001110001     
 RTS_CODE    EQU     %0100111001110101
 TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
@@ -15,71 +16,72 @@ START:                  ; first instruction of program
 
 *Testing Code
         
-       ADDA.L   #$11111111,A2
-       ADDA.L   #$1111,A2
-       ADDA.W   #223,A2
-       ADDA.L   A1,A2
-       ADDA.L   D1,A2
-       ADDA.L   #2,A2
-       ADDA.L   #223,A2
-       ADDA.W   A5,A7
-       ADDA.W   A2,A5
+       *ADDA.L   #$11111111,A2
+       *ADDA.L   #$1111,A2
+       *ADDA.W   #223,A2
+       *ADDA.L   A1,A2
+       *ADDA.L   D1,A2
+       *ADDA.L   #2,A2
+       *ADDA.L   #223,A2
+       *ADDA.W   A5,A7
+       *ADDA.W   A2,A5
        
-       BTST     #0,D1
-       BTST     #6,(A6)
-       BTST     #12,(A5)+
-       BTST     #3,-(A4)
-       BTST     #2,$1234
-       BTST     #7,$12341234
-       BTST     D2,D7
-       BTST     D3,#4
+       *BTST     #0,D1
+       *BTST     #6,(A6)
+       *BTST     #12,(A5)+
+       *BTST     #3,-(A4)
+       *BTST     #2,$1234
+       *BTST     #7,$12341234
+      *BTST     D2,D7
+      *BTST     D3,#4
        
-       ADD.L    D1,D2
-       ADD.B    D5,D7
-       ADD.W    D3,D4
-       ADD.L    #34,D6
-       ADDA.L   A1,A2
-       MULS.W   D1,D2
+       *ADD.L    D1,D2
+       *ADD.B    D5,D7
+       *ADD.W    D3,D4
+       *ADD.L    #34,D6
+       *ADDA.L   A1,A2
+       *MULS.W   D1,D2
        
-       ADDI.L   #2,D1
-       ADDI.W   #4,D6
-       ADDI.B   #4,D7
-       ADDI.W   #8,D3
-       ADDI.W   #1,D2
-       ADDI.B   #8,D5
-       ADDI.B   #3,D1
-       ADDI.B   #127,D1
+       *ADDI.L   #2,D1
+       *ADDI.W   #4,D6
+       *ADDI.B   #4,D7
+       *ADDI.W   #8,D3
+       *ADDI.W   #1,D2
+       *ADDI.B   #8,D5
+       *ADDI.B   #3,D1
+       *ADDI.B   #127,D1
 * All have been tested.      
-       ADD.L    D1,D2
-       ADD.B    D5,D7
-       ADD.W    D3,D4
-       ADD.L    #34,D6
-       ADDA.L   A1,A2
-       MULS.W   D1,D2
+       *ADD.L    D1,D2
+       *ADD.B    D5,D7
+       *ADD.W    D3,D4
+       *ADD.L    #34,D6
+       *ADDA.L   A1,A2
+       *MULS.W   D1,D2
 
 * All have been tested.
-       NOP
-       BCC     SKIP        *6400   Condition: %0100
-       *BCC     INPUT        *6400   Condition: %0100
-       BCS     SKIP        *6500   Condition: %0101
-       BEQ     SKIP        *6700   Condition: %0111
-       BGE     SKIP        *6C00   Condition: %1100
-       BGT     SKIP        *6E00   Condition: %1110
-       BHI     SKIP        *6200   Condition: %0010
-       BLE     SKIP        *6F00   Condition: %1111
-       BLS     SKIP        *6300   Condition: %0011
-       BLT     SKIP        *6D00   Condition: %1101
-       BMI     SKIP        *6B00   Condition: %1011
-       BNE     SKIP        *6600   Condition: %0110
-       BPL     SKIP        *6A00   Condition: %1010
-       BVC     SKIP        *6800   Condition: %1000
-       BVS     SKIP        *6900   Condition: %1001
+       *NOP
        BRA     SKIP        *6000   Condition: %0000
+       *BCC     SKIP        *6400   Condition: %0100
+       *BCC     INPUT        *6400   Condition: %0100
+       *BCS     SKIP        *6500   Condition: %0101
+       *BEQ     SKIP        *6700   Condition: %0111
+       *BGE     SKIP        *6C00   Condition: %1100
+       *BGT     SKIP        *6E00   Condition: %1110
+       *BHI     SKIP        *6200   Condition: %0010
+       *BLE     SKIP        *6F00   Condition: %1111
+       *BLS     SKIP        *6300   Condition: %0011
+       *BLT     SKIP        *6D00   Condition: %1101
+       *BMI     SKIP        *6B00   Condition: %1011
+       *BNE     SKIP        *6600   Condition: %0110
+       *BPL     SKIP        *6A00   Condition: %1010
+       *BVC     SKIP        *6800   Condition: %1000
+       *BVS     SKIP        *6900   Condition: %1001
+       
 
 
 * All have been tested.
-       AND.W    D1,D2
-       BTST     D1,#4
+       *AND.W    D1,D2
+       *BTST     D1,#4
        LSL.W    D1,D2
        LSR.W    D1,D2
        ASL.W    D1,D2
@@ -558,35 +560,83 @@ BIN_1110_FIFTH
     CMP.B   #%11000000,D2
     BEQ     MEM_SHIFTS
 REG_SHIFTS      *This has been determined to be a register shift.
-    MOVE.B  D1,D2           *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
-    AND.B   #%00011000,D2   *Significant bits for determining what kind of shift.
-    CMP.B   #%00001000,D2   *Compare with the shift with the middle value in the range.
     MOVE.B  #%11100111,D3           *Shift count of 13 for VALIDATE_SIZE and any size accepted.
     JSR     VALIDATE_SIZE_CLRLIKE   *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
-    BGT     ROL_ROR_SECT    *If greater than, it's a rotation.
-    BEQ     LSL_LSR_SECT    *If greater than, it's a Logical Shift. Else, Continue to Arithmetic shifts.
-ASR_ASL_SECT    *Arithmeitc shift. Determines direction.
+    MOVE.B  D1,D2           *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
+    AND.B   #%00011000,D2   *Significant bits for determining what kind of shift.
+    CMP.B   #%00001000,D2   *Compare with the shift with the middle value in the range.
+    BGT     ROL_ROR_REG_SECT    *If greater than, it's a rotation.
+    BEQ     LSL_LSR_REG_SECT    *If greater than, it's a Logical Shift. Else, Continue to Arithmetic shifts.
+ASR_ASL_REG_SECT    *Arithmeitc shift. Determines direction.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000011000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1110000000000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     BTST    #8,D1
-    BNE     ASL_SECT
-ASR_SECT        *Output the message 'ASR.'.
+    BNE     ASL_REG_SECT
+ASR_REG_SECT        *Output the message 'ASR.'.
     LEA     ASR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
     JMP     RELOOP
-LSL_LSR_SECT    *Logical Shift. Determines direction.
+LSL_LSR_REG_SECT    *Logical Shift. Determines direction.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000011000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1110000000001000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     BTST    #8,D1
-    BNE     LSL_SECT
-LSR_SECT        *Output the message 'LSR.'.
+    BNE     LSL_REG_SECT
+LSR_REG_SECT        *Output the message 'LSR.'.
     LEA     LSR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
     JMP     RELOOP    
-ROL_ROR_SECT    *Rotation. Determines direction.
+ROL_ROR_REG_SECT    *Rotation. Determines direction.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111000000011000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1110000000011000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     BTST    #8,D1
-    BNE     ROL_SECT
-ROR_SECT        *Output the message 'ROR.'.
+    BNE     ROL_REG_SECT
+ROR_REG_SECT        *Output the message 'ROR.'.
+    LEA     ROR_MESS,A1
+    MOVE.B  #14,D0      
+    TRAP    #15
+    JMP     RELOOP
+ASR_ASL_MEM_SECT    *Arithmeitc shift. Determines direction.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111111011000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1110000011000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+    BTST    #8,D1
+    BNE     ASL_MEM_SECT
+ASR_MEM_SECT        *Output the message 'ASR.'.
+    LEA     ASR_MESS,A1
+    MOVE.B  #14,D0      
+    TRAP    #15
+    JMP     RELOOP
+LSL_LSR_MEM_SECT    *Logical Shift. Determines direction.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111111011000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1110001011000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+    BTST    #8,D1
+    BNE     LSL_MEM_SECT
+LSR_MEM_SECT        *Output the message 'LSR.'.
+    LEA     LSR_MESS,A1
+    MOVE.B  #14,D0      
+    TRAP    #15
+    JMP     RELOOP    
+ROL_ROR_MEM_SECT    *Rotation. Determines direction.
+    MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
+    AND.W   #%1111111011000000,D2   *Isolating bits for detrmining validity of OPCode.
+    CMP.W   #%1110011011000000,D2   *Comparing with valid value.
+    BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+    BTST    #8,D1
+    BNE     ROL_MEM_SECT
+ROR_MEM_SECT        *Output the message 'ROR.'.
     LEA     ROR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
@@ -599,9 +649,9 @@ MEM_SHIFTS      *This is a memory shift.
     MOVE.W  D1,D2                  *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
     AND.W   #%0000011000000000,D2   *Significant bits for determining what kind of shift.
     CMP.W   #%0000001000000000,D2   *Compare with the shift with the middle value in the range.
-    BGT     ROL_ROR_SECT
-    BEQ     LSL_LSR_SECT
-    BRA     ASR_ASL_SECT
+    BGT     ROL_ROR_MEM_SECT
+    BEQ     LSL_LSR_MEM_SECT
+    BRA     ASR_ASL_MEM_SECT
     
 BIN_1101_FOURTH *Possibilities are ADD and ADDA.
     MOVE.W  D1,D2           *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
@@ -1015,17 +1065,32 @@ MULS_SECT
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     JMP     RELOOP
-LSL_SECT                    *Output the message 'LSL.'.
+LSL_REG_SECT                    *Output the message 'LSL.'.
     LEA     LSL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
     JMP     RELOOP
-ASL_SECT                    *Output the message 'ASL.'.
+ASL_REG_SECT                    *Output the message 'ASL.'.
     LEA     ASL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
     JMP     RELOOP
-ROL_SECT                    *Output the message 'ROL.'.
+ROL_REG_SECT                    *Output the message 'ROL.'.
+    LEA     ROL_MESS,A1
+    MOVE.B  #14,D0      
+    TRAP    #15
+    JMP     RELOOP
+LSL_MEM_SECT                    *Output the message 'LSL.'.
+    LEA     LSL_MESS,A1
+    MOVE.B  #14,D0      
+    TRAP    #15
+    JMP     RELOOP
+ASL_MEM_SECT                    *Output the message 'ASL.'.
+    LEA     ASL_MESS,A1
+    MOVE.B  #14,D0      
+    TRAP    #15
+    JMP     RELOOP
+ROL_MEM_SECT                    *Output the message 'ROL.'.
     LEA     ROL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
