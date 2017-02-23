@@ -15,6 +15,20 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 *Testing Code
+
+       MOVE.L    #$67890000,D5
+       MOVE.L    D7,D3
+              
+       MOVE.L    #$123,D7
+
+       
+       MOVE.L    #$123,D5
+       MOVE.L    #$1237,D7
+       
+       MOVE.W    #$1231,D7
+       MOVE.L    #$12311111,D7
+       MOVE.L    #$567123,D5
+
        MOVE.B    D2,D3
        MOVE.W    D1,D4
        MOVE.L    D7,D3
@@ -37,24 +51,24 @@ START:                  ; first instruction of program
        MOVEQ     #3,D1
        
        
-       *ADDA.L   #$11111111,A2
-       *ADDA.L   #$1111,A2
-       *ADDA.W   #223,A2
-       *ADDA.L   A1,A2
-       *ADDA.L   D1,A2
-       *ADDA.L   #2,A2
-       *ADDA.L   #223,A2
-       *ADDA.W   A5,A7
-       *ADDA.W   A2,A5
+       ADDA.L   #$11111111,A2
+       ADDA.L   #$1111,A2
+       ADDA.W   #223,A2
+       ADDA.L   A1,A2
+       ADDA.L   D1,A2
+       ADDA.L   #2,A2
+       ADDA.L   #223,A2
+       ADDA.W   A5,A7
+       ADDA.W   A2,A5
        
-       *BTST     #0,D1
-       *BTST     #6,(A6)
-       *BTST     #12,(A5)+
-       *BTST     #3,-(A4)
-       *BTST     #2,$1234
-       *BTST     #7,$12341234
-      *BTST     D2,D7
-      *BTST     D3,#4
+       BTST     #0,D1
+       BTST     #6,(A6)
+       BTST     #12,(A5)+
+       BTST     #3,-(A4)
+       BTST     #2,$1234
+       BTST     #7,$12341234
+       BTST     D2,D7
+       BTST     D3,#4
        
        *ADD.L    D1,D2
        *ADD.B    D5,D7
@@ -63,14 +77,14 @@ START:                  ; first instruction of program
        *ADDA.L   A1,A2
        *MULS.W   D1,D2
        
-       *ADDI.L   #2,D1
-       *ADDI.W   #4,D6
-       *ADDI.B   #4,D7
-       *ADDI.W   #8,D3
-       *ADDI.W   #1,D2
-       *ADDI.B   #8,D5
-       *ADDI.B   #3,D1
-       *ADDI.B   #127,D1
+       ADDI.L   #2,D1
+       ADDI.W   #4,D6
+       ADDI.B   #4,D7
+       ADDI.W   #8,D3
+       ADDI.W   #1,D2
+       ADDI.B   #8,D5
+       ADDI.B   #3,D1
+       ADDI.B   #127,D1
 * All have been tested.      
        *ADD.L    D1,D2
        *ADD.B    D5,D7
@@ -265,17 +279,78 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     BNE     VALID_MODE_SOURCE_DEST_1_JSR
     JSR     VALID_MODE_SOURCE_DEST_0
     
+    JSR     MOVE_PRINT_IMMED_ADDR    *Print the data for 
     *MOVE.B  D4,D1
     ****************
     
     JMP     RELOOP
 VALID_MODE_SOURCE_DEST_1_JSR
     JSR     VALID_MODE_SOURCE_DEST_1
+    
     JMP     RELOOP
 MOVE_VALID_MODE_1_JSR
     JSR     VALID_MODE_1
+
+    JSR     MOVE_PRINT_IMMED_ADDR
+    
+    
+    CLR.L   D1
+    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  D4,D1
+    
+    ****Testing****
+    BTST    #8,D1
+    BNE     VALID_MODE_SOURCE_DEST_1_JSR
+    JSR     VALID_MODE_SOURCE_DEST_0
     JMP     RELOOP
     
+MOVE_PRINT_IMMED_ADDR
+    BTST    #5,D1
+    BEQ     RTS
+    BTST    #4,D1
+    BEQ     RTS
+    BTST    #3,D1
+    BEQ     RTS
+    BTST    #2,D1
+    BEQ     RTS
+    BTST    #12,D1
+    BEQ   MOVE_PRINT_IMMED_ADDR_LONG
+    *MOVE.W  (A2)+,D6
+    
+    RTS
+MOVE_PRINT_IMMED_ADDR_LONG
+    BTST    #5,D1
+    BEQ     RTS
+    BTST    #4,D1
+    BEQ     RTS
+    BTST    #3,D1
+    BEQ     RTS
+    BTST    #2,D1
+    BEQ     RTS
+
+    MOVE.W  (A2)+,D6         *Get the remaining word
+    CMP.W   #0,D6            *Compare to 0, if it is 0, print 0000
+    BEQ     PRINT_0000_RTS
+    
+    MOVE.L  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15
+    CLR.L   D1
+    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  D4,D1
+    
+    ****Testing****
+    BTST    #8,D1
+    BNE     VALID_MODE_SOURCE_DEST_1_JSR
+    JSR     VALID_MODE_SOURCE_DEST_0
+
+    RTS
+
 PRINT_ADDR_MODE_SIZE_BIT_13    
     MOVE.L  D1,D4
     BTST    #13,D1
@@ -1727,25 +1802,47 @@ VALID_MODE_111_POUND
     MOVE.B  #'#',D1
     MOVE.B  #6,D0
     TRAP    #15
-    
+    MOVE.B  #'$',D1
+    MOVE.B  #6,D0
+    TRAP    #15
     MOVE.W  D4,D1
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
-
-    MOVE.W  D6,D1
+    
+    CMP.W   #0,D6
+    BEQ     RTS
+    
+    
+    MOVE.L  D6,D1
+    
+    
+    
     MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
     MOVE.B  #16,D2        *Set the base to 16
     TRAP    #15           *Print out the Addr1 value in hexadecimal format
     
     MOVE.W  D4,D1                    *Copy original values back into D1
     RTS
+    
+RTS
+    RTS
 VALID_MODE_111_LONG
     MOVE.L  (A2)+,D6
+    
     MOVE.L  D6,D1
     MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
     MOVE.B  #16,D2        *Set the base to 16
     TRAP    #15
     CLR.L   D1
     
+    RTS
+    
+PRINT_0000_RTS
+    MOVE.B  #'0',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    TRAP    #15
+    TRAP    #15
+    TRAP    #15
     RTS
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
     BTST    #4,D1
@@ -2065,6 +2162,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
