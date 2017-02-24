@@ -269,31 +269,22 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     BNE     MOVE_VALID_MODE_1_JSR
     JSR     VALID_MODE_0
     
-    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
-    MOVE.B  D4,D1
-    
-    ****Testing****
-    BTST    #8,D1
-    BNE     VALID_MODE_SOURCE_DEST_1_JSR
-    JSR     VALID_MODE_SOURCE_DEST_0
-    
-    JSR     MOVE_PRINT_IMMED_ADDR    *Print the data for 
-    *MOVE.B  D4,D1
-    ****************
-    
-    JMP     RELOOP
+    JMP     MOVE_PRINT_DESTINATION
 VALID_MODE_SOURCE_DEST_1_JSR
     JSR     VALID_MODE_SOURCE_DEST_1
     
     JMP     RELOOP
 MOVE_VALID_MODE_1_JSR
     JSR     VALID_MODE_1
+    
+    BTST    #5,D1
+    BNE     MOVE_PRINT_IMMED_ADDR_11
+    
+    
+    
+    JMP     MOVE_PRINT_DESTINATION
 
-    JSR     MOVE_PRINT_IMMED_ADDR
-    
-    
+MOVE_PRINT_DESTINATION
     CLR.L   D1
     MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
     MOVE.B  #6,D0   *Picking TRAP task #6. 
@@ -305,7 +296,15 @@ MOVE_VALID_MODE_1_JSR
     BNE     VALID_MODE_SOURCE_DEST_1_JSR
     JSR     VALID_MODE_SOURCE_DEST_0
     JMP     RELOOP
-    
+
+MOVE_PRINT_IMMED_ADDR_11
+    BTST    #4,D1
+    BNE     MOVE_PRINT_IMMED_ADDR_MODE_111
+    JMP     RELOOP
+
+MOVE_PRINT_IMMED_ADDR_MODE_111
+    JSR     MOVE_PRINT_IMMED_ADDR
+    JMP     MOVE_PRINT_DESTINATION
 MOVE_PRINT_IMMED_ADDR
     BTST    #5,D1
     BEQ     RTS
@@ -338,16 +337,6 @@ MOVE_PRINT_IMMED_ADDR_LONG
     MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
     MOVE.B  #16,D2        *Set the base to 16
     TRAP    #15
-    CLR.L   D1
-    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
-    MOVE.B  D4,D1
-    
-    ****Testing****
-    BTST    #8,D1
-    BNE     VALID_MODE_SOURCE_DEST_1_JSR
-    JSR     VALID_MODE_SOURCE_DEST_0
 
     RTS
 
@@ -2157,6 +2146,11 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Tab type~1~
 *~Tab size~4~
 
+
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 
 *~Font name~Courier New~
 *~Font size~10~
