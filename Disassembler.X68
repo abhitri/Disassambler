@@ -15,13 +15,70 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 *Testing Code
-
+    
+    LEA     $12329923,A1     *Outputs the message 'JSR'
+    LEA     JSR_MESS,A6     *Outputs the message 'JSR'
 *       MOVEA.L   #$11111111,A2
 *       MOVEA.L   #$1111,A2
 *       MOVEA.W   #223,A2
 *       MOVEA.L   A1,A2
 *       MOVEA.L   D1,A2
 *       MOVEA.L   #2,A2
+*       
+*       MOVEA.W   D2,A2
+*       MOVEA.L   #$345D,A4
+*       MOVEA.W   (A4)+,A3
+       *MOVEA.L   -(A2),A5
+*       ADDA.L   #$11111111,A2
+*       ADDA.L   #$1111,A2
+*       ADDA.W   #223,A2
+*       ADDA.L   A1,A2
+*       ADDA.L   D1,A2
+*       ADDA.L   #2,A2
+*       ADDA.L   #223,A2
+
+*       ADDA.W   A5,A7
+*       ADDA.W   A2,A5
+*       
+*       MOVEA.W   A5,A7
+*       MOVEA.W   #16,A5
+*       MOVEA.L   A2,A5
+*       *MOVEA.L   -(A2),A5
+*       
+*       MOVEQ     #7,D2
+*       MOVEQ     #2,D5
+*       MOVEQ     #5,D3
+*       
+*       MOVE.L    #$123,D5
+*       MOVE.L    #$1237,D7
+*       
+*       MOVE.W    #$1231,D7
+*       MOVE.L    #$12311111,D7
+*       MOVE.L    #$567123,D5
+*
+*       MOVE.B    D2,D3
+*       MOVE.W    D1,D4
+*       MOVE.L    D7,D3
+*              
+*       MOVE.L    #$123,D7
+*
+*       
+*      
+*       MOVE.B    #12,D3
+*       MOVE.W    #123,D4
+*       MOVE.L    #167,D3
+*       
+*       MOVE.B    #$12,D3
+*       MOVE.W    #$123,D4
+*       MOVE.L    #$167,D3
+*    
+*       MOVEM     (A5),D0-D1
+       MOVEQ     #1,D1
+       MOVEQ     #5,D3
+       MOVEQ     #0,D6
+       MOVEQ     #3,D1
+*       
+*       
 *       ADDA.L   #$11111111,A2
 *       ADDA.L   #$1111,A2
 *       ADDA.W   #223,A2
@@ -31,76 +88,37 @@ START:                  ; first instruction of program
 *       ADDA.L   #223,A2
 *       ADDA.W   A5,A7
 *       ADDA.W   A2,A5
-       
-       MOVEA.W   A5,A7
-       MOVEA.W   #16,A5
-       MOVEA.L   A2,A5
-
-
-       
-       MOVE.L    #$123,D5
-       MOVE.L    #$1237,D7
-       
-       MOVE.W    #$1231,D7
-       MOVE.L    #$12311111,D7
-       MOVE.L    #$567123,D5
-
-       MOVE.B    D2,D3
-       MOVE.W    D1,D4
-       MOVE.L    D7,D3
-              
-       MOVE.L    #$123,D7
-
-       
-      
-       MOVE.B    #12,D3
-       MOVE.W    #123,D4
-       MOVE.L    #167,D3
-       
-       MOVE.B    #$12,D3
-       MOVE.W    #$123,D4
-       MOVE.L    #$167,D3
-    
-       MOVEM     (A5),D0-D1
-       MOVEQ     #1,D1
-       MOVEQ     #13,D1
-       MOVEQ     #3,D1
-       
-       
-       ADDA.L   #$11111111,A2
-       ADDA.L   #$1111,A2
-       ADDA.W   #223,A2
-       ADDA.L   A1,A2
-       ADDA.L   D1,A2
-       ADDA.L   #2,A2
-       ADDA.L   #223,A2
-       ADDA.W   A5,A7
-       ADDA.W   A2,A5
-       
-       BTST     #0,D1
-       BTST     #6,(A6)
-       BTST     #12,(A5)+
-       BTST     #3,-(A4)
-       BTST     #2,$1234
-       BTST     #7,$12341234
-       BTST     D2,D7
-       BTST     D3,#4
-       
-       *ADD.L    D1,D2
-       *ADD.B    D5,D7
-       *ADD.W    D3,D4
-       *ADD.L    #34,D6
-       *ADDA.L   A1,A2
-       *MULS.W   D1,D2
-       
-       ADDI.L   #2,D1
-       ADDI.W   #4,D6
-       ADDI.B   #4,D7
-       ADDI.W   #8,D3
-       ADDI.W   #1,D2
-       ADDI.B   #8,D5
-       ADDI.B   #3,D1
-       ADDI.B   #127,D1
+*       ADDA.W   (A4)+,A3
+*       *ADDA.L   -(A2),A5
+*       
+*       MOVEA.W   D2,A2
+*       MOVEA.W   (A4)+,A3
+*       MOVEA.L   -(A2),A5
+*       
+*       BTST     #0,D1
+*       BTST     #6,(A6)
+*       BTST     #12,(A5)+
+*       BTST     #3,-(A4)
+*       BTST     #2,$1234
+*       BTST     #7,$12341234
+*       BTST     D2,D7
+*       BTST     D3,#4
+*       
+*       *ADD.L    D1,D2
+*       *ADD.B    D5,D7
+*       *ADD.W    D3,D4
+*       *ADD.L    #34,D6
+*       *ADDA.L   A1,A2
+*       *MULS.W   D1,D2
+*       
+*       ADDI.L   #2,D1
+*       ADDI.W   #4,D6
+*       ADDI.B   #4,D7
+*       ADDI.W   #8,D3
+*       ADDI.W   #1,D2
+*       ADDI.B   #8,D5
+*       ADDI.B   #3,D1
+*       ADDI.B   #127,D1
 * All have been tested.      
        *ADD.L    D1,D2
        *ADD.B    D5,D7
@@ -325,7 +343,7 @@ MOVE_PRINT_IMMED_ADDR_MODE_111
     JSR     MOVE_PRINT_IMMED_ADDR
     JMP     MOVE_PRINT_DESTINATION
 MOVE_PRINT_IMMED_ADDR
-    BTST    #5,D1
+    BTST    #5,D1                           *Test to make sure the mode is 111, if it is then we need to pop from the address.
     BEQ     RTS
     BTST    #4,D1
     BEQ     RTS
@@ -333,7 +351,7 @@ MOVE_PRINT_IMMED_ADDR
     BEQ     RTS
     BTST    #2,D1
     BEQ     RTS
-    BTST    #12,D1
+    BTST    #12,D1                          *Test if it is a long, if so pop one more word
     BEQ   MOVE_PRINT_IMMED_ADDR_LONG
     
     RTS
@@ -1151,8 +1169,7 @@ MOVEA_RETURN
     BTST    #5,D1    
     BEQ     MOVEA_VALID_MODE_0_JSR
     JSR     VALID_MODE_1
-    
-    RTS     
+    JMP     MOVEA_PRINT_An    
 MOVEA_VALID_MODE_0_JSR
     JSR     VALID_MODE_0
     JMP     MOVEA_PRINT_An
@@ -1181,13 +1198,7 @@ MOVEA_PRINT_LONG
 
     
     RTS
-
-****************************
-
-
-
-
-****************************   
+ 
 ADDQ_SECT     
     LEA     ADDQ_MESS,A1    *Outputs the message 'ADDQ.'.
     MOVE.B  #14,D0      
@@ -1325,16 +1336,115 @@ LEA_SECT
     AND.W   #%1111000111000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%0100000111000000,D2   *Comparing with valid value.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+    
+    JMP     LEA_PRINT
     JMP     RELOOP
+
+LEA_PRINT_IMMED_ADDR_LONG
+    MOVE.W  (A2)+,D6         *Get the remaining word
+    CMP.W   #0,D6            *Compare to 0, if it is 0, print 0000
+    BEQ     PRINT_0000_RTS
+    
+    MOVE.L  D6,D1
+    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    MOVE.B  #16,D2        *Set the base to 16
+    TRAP    #15
+
+    RTS 
+LEA_PRINT
+    MOVE.L  D1,D4
+    
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.L  D4,D1
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_LEA_JSR
+    
+    JSR     VALID_MODE_1     
+    JMP     LEA_PRINT_An
+VALID_MODE_0_LEA_JSR
+    JSR     VALID_MODE_0
+LEA_PRINT_An
+   * JSR     LEA_PRINT_IMMED_ADDR_LONG
+    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1                           *Move orginial opcode back into D1
+    
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    JMP     RELOOP
+    
 MOVEQ_SECT
-    LEA     MOVEQ_MESS,A1   *Output the message 'MOVEQ.'.
+    LEA     MOVEQ_MESS,A1   *Output the message 'MOVEQ '.
     MOVE.B  #14,D0      
     TRAP    #15
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
     AND.W   #%1111000100000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%0111000000000000,D2   *Comparing with valid value.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+   
+    JMP     MOVEQ_PRINT
+    
+    
+MOVEQ_PRINT
+    MOVE.L  D1,D4
+    MOVE.B  #'#',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    
+    MOVE.L  D4,D1
+    CLR.L   D6
+    MOVE.B  #24,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #24,D6
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1                           *Move orginial opcode back into D1
+    
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
     JMP     RELOOP
+ 
+    
+    
 MULS_SECT
     LEA     MULS_MESS,A1    *Output the message 'MULS.'.
     MOVE.B  #14,D0      
@@ -2202,7 +2312,7 @@ MOVE_MESS       DC.B    'MOVE.',0
 NOP_MESS        DC.B    'NOP',0
 MOVEA_MESS      DC.B    'MOVEA.',0
 ADDI_MESS       DC.B    'ADDI.',0
-MOVEQ_MESS      DC.B    'MOVEQ.',0
+MOVEQ_MESS      DC.B    'MOVEQ ',0
 MOVEM_MESS      DC.B    'MOVEM.',0
 ADDQ_MESS       DC.B    'ADDQ.',0
 LEA_MESS        DC.B    'LEA',0
@@ -2277,6 +2387,10 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Tab type~1~
 *~Tab size~4~
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
