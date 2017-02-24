@@ -263,8 +263,8 @@ BIN_00_THIRD    *Possibilites are MOVE, MOVEA, and ADDI.
     CMP.W   #%0000000000000000,D2   *Compare with value that would be true if Code is ADDI or BTST.
     BEQ     BIN_0000_FOURTH               *Go to output ADDI_MESS.
     MOVE.W  D1,D2                   *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
-    AND.B   #%00111000,D2           *These bits are required to differentiate between MOVE and MOVEA. 
-    CMP.B   #%00001000,D2           *Compare with value that would be true if Code is MOVEA.
+    AND.W   #%0000111000000,D2           *These bits are required to differentiate between MOVE and MOVEA. 
+    CMP.W   #%0000001000000,D2           *Compare with value that would be true if Code is MOVEA.
     BEQ     MOVEA_SECT              *Go to output MOVEA_MESS. Else, continue to MOVE_SECT.
 MOVE_SECT                           *Outputs the message 'MOVE.'.
     LEA     MOVE_MESS,A1 
@@ -2276,6 +2276,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
