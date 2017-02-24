@@ -15,7 +15,16 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 *Testing Code
+    JSR     DO_NOTHING
     
+DO_NOTHING
+    CLR.L   D1
+    CLR.B   D2
+    CLR.W   D5
+    CLR.L   (A4)
+    CLR.W   (A4)+
+    CLR.W   -(A4)
+  
     LEA     $12329923,A1     *Outputs the message 'JSR'
     LEA     JSR_MESS,A6     *Outputs the message 'JSR'
 *       MOVEA.L   #$11111111,A2
@@ -532,7 +541,60 @@ CLR_SECT
     AND.W   #%1111111100000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%0100001000000000,D2   *Comparing with valid value.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
-    JMP     RELOOP           
+    
+    JMP     CLR_PRINT
+               
+    
+CLR_PRINT
+    JSR     CLR_PRINT_ADDR_MODE
+    
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_JSR
+    JSR     VALID_MODE_1   
+
+    JMP     RELOOP
+
+CLR_PRINT_ADDR_MODE
+   
+    BTST    #7,D1
+    BNE     CLR_PRINT_LONG
+    
+    BTST    #6,D1
+    BNE     CLR_PRINT_WORD
+    
+    *We pass both cases, it is a .B
+    CLR.L   D4
+    MOVE.L  D1,D4
+    MOVE.B  #'B',D1 *Setting value in D1 to literal value for a L character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a L character.
+    TRAP    #15     *Output individual character.
+    MOVE.L  D4,D1
+    RTS
+
+CLR_PRINT_LONG    
+    CLR.L   D4
+    MOVE.L  D1,D4
+    MOVE.B  #'L',D1 *Setting value in D1 to literal value for a L character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a L character.
+    TRAP    #15     *Output individual character.
+    MOVE.L  D4,D1
+    RTS
+    
+CLR_PRINT_WORD    
+    CLR.L   D4
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1 *Setting value in D1 to literal value for a L character.
+    MOVE.B  #6,D0   *Picking TRAP task #6. 
+    TRAP    #15     *Output individual character.
+    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a L character.
+    TRAP    #15     *Output individual character.
+    MOVE.L  D4,D1
+    MOVE.L  D4,D1
+    RTS
     
 BIN_011_FOURTH  *Possibilities are Bcc and MOVEQ.
     BTST    #12,D1
@@ -1323,7 +1385,21 @@ JSR_SECT
     AND.W   #%1111111111000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%0100111010000000,D2   *Comparing with valid value.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+        
+    MOVE.L  D1,D4
+    
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.L  D4,D1    
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_JSR
+    JSR     VALID_MODE_1   
+    MOVE.L  D4,D1
+
     JMP     RELOOP
+
 LEA_SECT
     LEA     LEA_MESS,A1     *Outputs the message 'LEA'.
     MOVE.B  #14,D0      
