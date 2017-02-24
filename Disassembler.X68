@@ -290,10 +290,9 @@ MOVE_PRINT_DESTINATION
     MOVE.B  #6,D0   *Picking TRAP task #6. 
     TRAP    #15     *Output individual character.
     MOVE.B  D4,D1
-    
-    ****Testing****
-    BTST    #8,D1
-    BNE     VALID_MODE_SOURCE_DEST_1_JSR
+
+    BTST    #8,D1                           *Test the destination mode
+    BNE     VALID_MODE_SOURCE_DEST_1_JSR    
     JSR     VALID_MODE_SOURCE_DEST_0
     JMP     RELOOP
 
@@ -316,7 +315,6 @@ MOVE_PRINT_IMMED_ADDR
     BEQ     RTS
     BTST    #12,D1
     BEQ   MOVE_PRINT_IMMED_ADDR_LONG
-    *MOVE.W  (A2)+,D6
     
     RTS
 MOVE_PRINT_IMMED_ADDR_LONG
@@ -1903,8 +1901,6 @@ VALID_MODE_011
     MOVE.B  #14,D0
     TRAP    #15
     RTS
-    
-***************Testing*********************
 
 VALID_MODE_SOURCE_DEST_1     *Options here are                 
     BTST    #7,D1
@@ -2056,10 +2052,6 @@ VALID_MODE_SOURCE_DEST_011
     TRAP    #15
     RTS
 
-    
-
-*******************************************
-
 PRINT_INVALID_OPCODE
     LEA     INVALID_MESS,A1 
     MOVE.B  #14,D0      
@@ -2140,23 +2132,10 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 
 
 
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
-
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
