@@ -16,10 +16,26 @@ START:                  ; first instruction of program
 
 *Testing Code
 
-       MOVE.L    #$67890000,D5
-       MOVE.L    D7,D3
-              
-       MOVE.L    #$123,D7
+*       MOVEA.L   #$11111111,A2
+*       MOVEA.L   #$1111,A2
+*       MOVEA.W   #223,A2
+*       MOVEA.L   A1,A2
+*       MOVEA.L   D1,A2
+*       MOVEA.L   #2,A2
+*       ADDA.L   #$11111111,A2
+*       ADDA.L   #$1111,A2
+*       ADDA.W   #223,A2
+*       ADDA.L   A1,A2
+*       ADDA.L   D1,A2
+*       ADDA.L   #2,A2
+*       ADDA.L   #223,A2
+*       ADDA.W   A5,A7
+*       ADDA.W   A2,A5
+       
+       MOVEA.W   A5,A7
+       MOVEA.W   #16,A5
+       MOVEA.L   A2,A5
+
 
        
        MOVE.L    #$123,D5
@@ -156,66 +172,70 @@ START:                  ; first instruction of program
        MOVEQ.L  #1,D1
        DIVU.W   D1,D0
       
-INPUT        LEA MESSAGE1,A1
-             MOVE.B  #14, D0
-             TRAP    #15
+INPUT        
+    LEA MESSAGE1,A1
+    MOVE.B  #14, D0  
+    TRAP    #15
                 
-             MOVEA.L $500,A1          ;This is where the string from the MESSAGE1 is stored
-             MOVE.B  #2,D0            ;This picks the trap task for input of a string
-             TRAP    #15
-             CLR.L   D4
-             MOVE.L  #28,D2           ;This is the number of bits that the first number needs to be shifted.
+    MOVEA.L $500,A1          ;This is where the string from the MESSAGE1 is stored
+    MOVE.B  #2,D0            ;This picks the trap task for input of a string
+    TRAP    #15
+    CLR.L   D4
+    MOVE.L  #28,D2           ;This is the number of bits that the first number needs to be shifted.
               
 
-CONVERTSTRING MOVE.B    (A1)+,D0
-              CMP.B     #$00,D0       ;This is making sure that we have reached the end of the string
-              BEQ       STRINGEND
-              CMP.B     #0,D2         ;This compare checks if the number of bits we are shifting is less than 0. 
-              BLT       STRINGEND     ;if so then we have 8 valid characters
-              CMP.W     #$0061,D0     ;This checks if its greater than 61 it is a lower case character or an invalid character
-              BGE       LOWERCASE     ;Go to the LOWERCASE
-              CMP.W     #$0041,D0     ;This checks if its greater than 41, it is an upper case or an invalid character
-              BGE       UPPERCASE     ;Go to the UPPERCASE
-              CMP.W     #$0030,D0     ;If D0 is greater than 30 then character is either invalid or a number
-              BGE       NUMBER        ;Go to number
-              BRA       CONVERTSTRING ;Go to the beginning of the loop
+CONVERTSTRING 
+    MOVE.B    (A1)+,D0
+    CMP.B     #$00,D0       ;This is making sure that we have reached the end of the string
+    BEQ       STRINGEND
+    CMP.B     #0,D2         ;This compare checks if the number of bits we are shifting is less than 0. 
+    BLT       STRINGEND     ;if so then we have 8 valid characters
+    CMP.W     #$0061,D0     ;This checks if its greater than 61 it is a lower case character or an invalid character
+    BGE       LOWERCASE     ;Go to the LOWERCASE
+    CMP.W     #$0041,D0     ;This checks if its greater than 41, it is an upper case or an invalid character
+    BGE       UPPERCASE     ;Go to the UPPERCASE
+    CMP.W     #$0030,D0     ;If D0 is greater than 30 then character is either invalid or a number
+    BGE       NUMBER        ;Go to number
+    BRA       CONVERTSTRING ;Go to the beginning of the loop
               
-LOWERCASE     CMP.W     #$0066,D0     ;If the value is greater than $66, the character is invalid
-              BGT       CONVERTSTRING ;Go to the CONVERTSTRING
-              SUB       #87,D0        ;Converting from an ASCII value to its hex value
-              LSL.L     D2,D0         ;Shifts the value in D0 to the right index
-              ADD.L     D0,D3         ;Add D0 to the resulting hex value
-              CLR.L     D0            ;Clear D0
-              SUB.B     #4,D2         ;Subtract 4 from D2 to adjust number of bits to be shifted. 
-              BRA       CONVERTSTRING ;Go back to the beginning of loop. 
+LOWERCASE     
+    CMP.W     #$0066,D0     ;If the value is greater than $66, the character is invalid
+    BGT       CONVERTSTRING ;Go to the CONVERTSTRING
+    SUB       #87,D0        ;Converting from an ASCII value to its hex value
+    LSL.L     D2,D0         ;Shifts the value in D0 to the right index
+    ADD.L     D0,D3         ;Add D0 to the resulting hex value
+    CLR.L     D0            ;Clear D0
+    SUB.B     #4,D2         ;Subtract 4 from D2 to adjust number of bits to be shifted. 
+    BRA       CONVERTSTRING ;Go back to the beginning of loop. 
               
-UPPERCASE     CMP.B     #$0046,D0     ;If the value is greater than $46, the character is invalid. 
-              BGT       CONVERTSTRING ;Go to the CONVERTSTRING
-              SUB.B     #55,D0        ;Convert D0 from its ASCII to its hex value
-              LSL.L     D2,D0
-              ADD.L     D0,D3
-              CLR.L     D0
-              SUB.B     #4,D2
-              BRA       CONVERTSTRING
+UPPERCASE     
+    CMP.B     #$0046,D0     ;If the value is greater than $46, the character is invalid. 
+    BGT       CONVERTSTRING ;Go to the CONVERTSTRING
+    SUB.B     #55,D0        ;Convert D0 from its ASCII to its hex value
+    LSL.L     D2,D0
+    ADD.L     D0,D3
+    CLR.L     D0
+    SUB.B     #4,D2
+    BRA       CONVERTSTRING
+                       
+NUMBER        
+    CMP.B     #$0039,D0
+    BGT       CONVERTSTRING
+    SUB.B     #48,D0
+    LSL.L     D2,D0
+    ADD.L     D0,D3
+    CLR.L     D0
+    SUB.B     #4,D2
+    BRA       CONVERTSTRING
               
-             
-NUMBER        CMP.B     #$0039,D0
-              BGT       CONVERTSTRING
-              SUB.B     #48,D0
-              LSL.L     D2,D0
-              ADD.L     D0,D3
-              CLR.L     D0
-              SUB.B     #4,D2
-              BRA       CONVERTSTRING
-              
-STRINGEND     MOVE.L    D3,D4
+STRINGEND     
+    MOVE.L    D3,D4
 
-
-             LEA MESSAGE2,A1
-             MOVE.B  #14,D0
-             TRAP    #15
-             MOVEA   D3,A2
-             BRA     RELOOP
+    LEA MESSAGE2,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    MOVEA   D3,A2
+    BRA     RELOOP
                 
 SKIP                                  
     MOVE.L  #$1000,A2       *Starting address for code to be disassembled.
@@ -1051,7 +1071,123 @@ MOVEA_SECT
     JSR     VALIDATE_SIZE_MOVELIKE  *Subroutine for validating size portion of OPCode.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
-    JMP     RELOOP    
+    *JMP     RELOOP 
+MOVEA_VALID_SECT
+    JSR     MOVEA_PRINT_OPMODE               *Print the opmode
+    JSR     MOVEA_IMMEDIATE_ADDR_TEST        *Test to see if its immediate addressing, signaled with a #, if it is we need a different case 
+    JMP     RELOOP
+    
+MOVEA_IMMEDIATE_ADDR_TEST
+    BTST    #5,D1                           *Test if the first digit is 1
+    BEQ     MOVEA_RETURN
+    BTST    #4,D1                           *Test if the second digit is 1
+    BEQ     MOVEA_RETURN
+    BTST    #3,D1                           *Test if the third digit is 1 
+    BEQ     MOVEA_RETURN                     
+    
+    *If test cases pass, then the mode = 111 and we need to pop a word or long based on the opcode
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'#',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #'$',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    BTST    #12,D1                           *Test the 8th bit to see if it is word addressed or long addressed
+    BNE     MOVEA_IMMEDIATE_WORD
+    
+    MOVE.L  (A2)+,D6                        *This gets the remaining word from the function
+    
+    CLR.L   D2
+    MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
+    MOVE.L  D6,D1
+    CLR.L   D2
+    MOVE.B  #16,D2                          *Print immediate addressing number
+    MOVE.B  #15,D0
+    TRAP    #15
+    
+    JMP     MOVEA_PRINT_An   
+    
+    
+MOVEA_IMMEDIATE_WORD
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+    CLR.L   D2
+    MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
+    MOVE.L  D6,D1
+    CLR.L   D2
+    MOVE.B  #16,D2                          *Print immediate addressing number
+    MOVE.B  #15,D0
+    TRAP    #15
+
+
+MOVEA_PRINT_An
+
+    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1                           *Move orginial opcode back into D1
+    
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    RTS                                     *Return from sub-routine
+ 
+MOVEA_RETURN
+    BTST    #5,D1    
+    BEQ     MOVEA_VALID_MODE_0_JSR
+    JSR     VALID_MODE_1
+    
+    RTS     
+MOVEA_VALID_MODE_0_JSR
+    JSR     VALID_MODE_0
+    JMP     MOVEA_PRINT_An
+    RTS
+MOVEA_PRINT_OPMODE
+    BTST    #8,D1
+    BNE     MOVEA_PRINT_LONG
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1
+    TRAP    #15
+    
+    
+    MOVE.L  D4,D1
+    RTS
+MOVEA_PRINT_LONG
+    MOVE.L  D1,D4
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1
+    TRAP    #15
+    MOVE.L  D4,D1
+
+    
+    RTS
+
+****************************
+
+
+
+
+****************************   
 ADDQ_SECT     
     LEA     ADDQ_MESS,A1    *Outputs the message 'ADDQ.'.
     MOVE.B  #14,D0      
@@ -2132,6 +2268,10 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
