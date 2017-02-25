@@ -21,8 +21,12 @@ START:                  ; first instruction of program
 *    BEQ     DO_NOTHING
     
 DO_NOTHING
-*    ADD.B   -(A3),D5
-*    SUB.B   -(A3),D5
+    ADD.B   -(A3),D5
+    SUB.B   -(A3),D5
+    add.l D4,(A3)
+    CMP.B   #3,D3
+    CMP.L   (A3),D5
+    CMP.W   #$1234,D6
 *    ADD.B   #4,D1
 *    SUB.B   #68,D1
 *    SUB.B   D3,D4
@@ -44,43 +48,42 @@ DO_NOTHING
 *       MOVEA.L   A1,A2
 *       MOVEA.L   D1,A2
 *       MOVEA.L   #2,A2
-*       
-*       MOVEA.W   D2,A2
-*       MOVEA.L   #$345D,A4
-*       MOVEA.W   (A4)+,A3
-       *MOVEA.L   -(A2),A5
-*       ADDA.L   #$11111111,A2
-*       ADDA.L   #$1111,A2
-*       ADDA.W   #223,A2
-*       ADDA.L   A1,A2
-*       ADDA.L   D1,A2
-*       ADDA.L   #2,A2
-*       ADDA.L   #223,A2
 
-*       ADDA.W   A5,A7
-*       ADDA.W   A2,A5
-*       
-*       MOVEA.W   A5,A7
-*       MOVEA.W   #16,A5
-*       MOVEA.L   A2,A5
-*       *MOVEA.L   -(A2),A5
-*       
-*       MOVEQ     #7,D2
-*       MOVEQ     #2,D5
-*       MOVEQ     #5,D3
-*       
-*       MOVE.L    #$123,D5
-*       MOVE.L    #$1237,D7
-*       
-*       MOVE.W    #$1231,D7
-*       MOVE.L    #$12311111,D7
-*       MOVE.L    #$567123,D5
-*
-*       MOVE.B    D2,D3
-*       MOVE.W    D1,D4
-*       MOVE.L    D7,D3
-*              
-*       MOVE.L    #$123,D7
+       MOVEA.L   #$345D,A4
+       *MOVEA.W   (A4)+,A3
+       *MOVEA.L   -(A2),A5
+       ADDA.L   #$11111111,A2
+       ADDA.L   #$1111,A2
+       ADDA.W   #223,A2
+       ADDA.L   A1,A2
+       ADDA.L   D1,A2
+       ADDA.L   #2,A2
+       ADDA.L   #223,A2
+
+       ADDA.W   A5,A7
+       ADDA.W   A2,A5
+       
+       MOVEA.W   A5,A7
+       MOVEA.W   #16,A5
+       MOVEA.L   A2,A5
+       *MOVEA.L   -(A2),A5
+       
+       MOVEQ     #7,D2
+       MOVEQ     #2,D5
+       MOVEQ     #5,D3
+       
+       MOVE.L    #$123,D5
+       MOVE.L    #$1237,D7
+       
+       MOVE.W    #$1231,D7
+       MOVE.L    #$12311111,D7
+       MOVE.L    #$567123,D5
+
+       MOVE.B    D2,D3
+       MOVE.W    D1,D4
+       MOVE.L    D7,D3
+              
+       MOVE.L    #$123,D7
 *
 *       
 *      
@@ -108,12 +111,12 @@ DO_NOTHING
        ADDA.L   #223,A2
        ADDA.W   A5,A7
        ADDA.W   A2,A5
-       ADDA.W   (A4)+,A3
+*       ADDA.W   (A4)+,A3
        *ADDA.L   -(A2),A5
        
-       MOVEA.W   D2,A2
-       MOVEA.W   (A4)+,A3
-       MOVEA.L   -(A2),A5
+*       MOVEA.W   D2,A2
+*       MOVEA.W   (A4)+,A3
+*       MOVEA.L   -(A2),A5
        
        BTST     #0,D1
        BTST     #6,(A6)
@@ -130,15 +133,15 @@ DO_NOTHING
        *ADD.L    #34,D6
        *ADDA.L   A1,A2
        *MULS.W   D1,D2
-       
-       ADDI.L   #2,D1
-       ADDI.W   #4,D6
-       ADDI.B   #4,D7
-       ADDI.W   #8,D3
-       ADDI.W   #1,D2
-       ADDI.B   #8,D5
-       ADDI.B   #3,D1
-       ADDI.B   #127,D1
+*       
+*       ADDI.L   #2,D1
+*       ADDI.W   #4,D6
+*       ADDI.B   #4,D7
+*       ADDI.W   #8,D3
+*       ADDI.W   #1,D2
+*       ADDI.B   #8,D5
+*       ADDI.B   #3,D1
+*       ADDI.B   #127,D1
 * All have been tested.      
        *ADD.L    D1,D2
        *ADD.B    D5,D7
@@ -813,12 +816,14 @@ OR_EA_DN                        *This is OR with the OPMode bieng <ea> -> Dn
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_ADD_EA_DN
     JMP     RELOOP 
 OR_DN_EA                        *This is OR with the OPMode bieng Dn -> <ea>
     MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_ADD_DN_EA
     JMP     RELOOP
     
 BIN_11_THIRD    *Possibilities are ADD, ADDA, MULS, AND, LSL, LSR, ASR, ASL, ROL, and ROR.
@@ -850,12 +855,14 @@ AND_EA_DN                   *This is ADD with the OPMode bieng <ea> -> Dn
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_ADD_EA_DN
     JMP     RELOOP
 AND_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
     MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_ADD_DN_EA
     JMP     RELOOP
 BIN_111_FOURTH  *Possibilities are LSL, LSR, ASR, ASL, ROL, and ROR. These can be register shifts or memory shifts.
 BIN_1110_FIFTH
@@ -988,7 +995,7 @@ ADD_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
-    *JSR     PRINT_OPMODE_ADD_DN_EA
+    JSR     PRINT_OPMODE_ADD_DN_EA
     JMP     RELOOP
 
 ADDA_SECT
@@ -1152,6 +1159,7 @@ CMP_SECT                    *Outputs the message 'CMP.'.
     AND.W   #%0000000111000000,D2
     CMP.W   #%0000000010000000,D2
     BGT     PRINT_INVALID_OPCODE
+    JSR     PRINT_OPMODE_ADD_EA_DN
     JMP     RELOOP     
 SUB_SECT                    *Outputs the message 'SUB.'.
     LEA     SUB_MESS,A1 
@@ -1178,6 +1186,7 @@ SUB_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_ADD_DN_EA
     JMP     RELOOP
         
 DIVU_SECT                   *Outputs the message 'DIVU.'.
@@ -1716,6 +1725,23 @@ OPMODE_ADD_EA_DN_TEST_WORD
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.W  D4,D1
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+    MOVE.W  D4,D1
     JMP     RELOOP
 
 
@@ -1740,6 +1766,23 @@ OPMODE_ADD_EA_DN_TEST_BYTE
     MOVE.B  #',',D1
     MOVE.B  #6,D0
     TRAP    #15
+    MOVE.W  D4,D1
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
     MOVE.W  D4,D1
     JMP     RELOOP
 
@@ -1766,6 +1809,23 @@ OPMODE_ADD_EA_DN_TEST_LONG
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.W  D4,D1
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+    MOVE.W  D4,D1
     JMP     RELOOP
 
 VALID_MODE_0_ADD_EA_DN
@@ -1779,7 +1839,143 @@ VALID_MODE_0_ADD_EA_DN
     MOVE.W  D4,D1
     JSR     DN_REGISTER
     JMP     RELOOP
+
+PRINT_OPMODE_ADD_DN_EA
+    BTST    #7,D1
+    BNE     OPMODE_ADD_DN_EA_TEST_LONG
+    BTST    #6,D1
+    BNE     OPMODE_ADD_DN_EA_TEST_WORD
+    JMP     OPMODE_ADD_DN_EA_TEST_BYTE
+OPMODE_ADD_DN_EA_TEST_WORD
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
     
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_ADD_DN_EA
+    JSR     VALID_MODE_1
+    
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
+
+
+OPMODE_ADD_DN_EA_TEST_BYTE
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'B',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_ADD_DN_EA
+    JSR     VALID_MODE_1
+    
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
+
+    
+OPMODE_ADD_DN_EA_TEST_LONG
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_ADD_DN_EA
+    JSR     VALID_MODE_1
+    
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
+VALID_MODE_0_ADD_DN_EA
+    JSR     VALID_MODE_0
+    JMP     RELOOP
+ 
 DN_REGISTER
     BTST    #11,D1
     BNE     DN_REGISTER_1
@@ -2521,6 +2717,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
