@@ -15,18 +15,29 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 *Testing Code
-    JSR     DO_NOTHING
+
+*    BRA     DO_NOTHING
+*    CMP     #0,D3
+*    BEQ     DO_NOTHING
     
 DO_NOTHING
-    CLR.L   D1
-    CLR.B   D2
-    CLR.W   D5
-    CLR.L   (A4)
-    CLR.W   (A4)+
-    CLR.W   -(A4)
-  
-    LEA     $12329923,A1     *Outputs the message 'JSR'
-    LEA     JSR_MESS,A6     *Outputs the message 'JSR'
+*    ADD.B   -(A3),D5
+*    SUB.B   -(A3),D5
+*    ADD.B   #4,D1
+*    SUB.B   #68,D1
+*    SUB.B   D3,D4
+**    SUB.B   (A3),D6
+**    SUB.B   -(A3),D5
+**    SUB.B   D7,-(A3)
+**    CLR.L   D1
+**    CLR.B   D2
+**    CLR.W   D5
+**    CLR.L   (A4)
+**    CLR.W   (A4)+
+**    CLR.W   -(A4)
+*  
+*    LEA     $12329923,A1     *Outputs the message 'JSR'
+*    LEA     JSR_MESS,A6     *Outputs the message 'JSR'
 *       MOVEA.L   #$11111111,A2
 *       MOVEA.L   #$1111,A2
 *       MOVEA.W   #223,A2
@@ -88,46 +99,46 @@ DO_NOTHING
        MOVEQ     #3,D1
 *       
 *       
-*       ADDA.L   #$11111111,A2
-*       ADDA.L   #$1111,A2
-*       ADDA.W   #223,A2
-*       ADDA.L   A1,A2
-*       ADDA.L   D1,A2
-*       ADDA.L   #2,A2
-*       ADDA.L   #223,A2
-*       ADDA.W   A5,A7
-*       ADDA.W   A2,A5
-*       ADDA.W   (A4)+,A3
-*       *ADDA.L   -(A2),A5
-*       
-*       MOVEA.W   D2,A2
-*       MOVEA.W   (A4)+,A3
-*       MOVEA.L   -(A2),A5
-*       
-*       BTST     #0,D1
-*       BTST     #6,(A6)
-*       BTST     #12,(A5)+
-*       BTST     #3,-(A4)
-*       BTST     #2,$1234
-*       BTST     #7,$12341234
-*       BTST     D2,D7
-*       BTST     D3,#4
-*       
-*       *ADD.L    D1,D2
-*       *ADD.B    D5,D7
-*       *ADD.W    D3,D4
-*       *ADD.L    #34,D6
-*       *ADDA.L   A1,A2
-*       *MULS.W   D1,D2
-*       
-*       ADDI.L   #2,D1
-*       ADDI.W   #4,D6
-*       ADDI.B   #4,D7
-*       ADDI.W   #8,D3
-*       ADDI.W   #1,D2
-*       ADDI.B   #8,D5
-*       ADDI.B   #3,D1
-*       ADDI.B   #127,D1
+       ADDA.L   #$11111111,A2
+       ADDA.L   #$1111,A2
+       ADDA.W   #223,A2
+       ADDA.L   A1,A2
+       ADDA.L   D1,A2
+       ADDA.L   #2,A2
+       ADDA.L   #223,A2
+       ADDA.W   A5,A7
+       ADDA.W   A2,A5
+       ADDA.W   (A4)+,A3
+       *ADDA.L   -(A2),A5
+       
+       MOVEA.W   D2,A2
+       MOVEA.W   (A4)+,A3
+       MOVEA.L   -(A2),A5
+       
+       BTST     #0,D1
+       BTST     #6,(A6)
+       BTST     #12,(A5)+
+       BTST     #3,-(A4)
+       BTST     #2,$1234
+       BTST     #7,$12341234
+       BTST     D2,D7
+       BTST     D3,#4
+       
+       *ADD.L    D1,D2
+       *ADD.B    D5,D7
+       *ADD.W    D3,D4
+       *ADD.L    #34,D6
+       *ADDA.L   A1,A2
+       *MULS.W   D1,D2
+       
+       ADDI.L   #2,D1
+       ADDI.W   #4,D6
+       ADDI.B   #4,D7
+       ADDI.W   #8,D3
+       ADDI.W   #1,D2
+       ADDI.B   #8,D5
+       ADDI.B   #3,D1
+       ADDI.B   #127,D1
 * All have been tested.      
        *ADD.L    D1,D2
        *ADD.B    D5,D7
@@ -319,16 +330,12 @@ MOVE_SECT                           *Outputs the message 'MOVE.'.
     JMP     MOVE_PRINT_DESTINATION
 VALID_MODE_SOURCE_DEST_1_JSR
     JSR     VALID_MODE_SOURCE_DEST_1
-    
     JMP     RELOOP
+    
 MOVE_VALID_MODE_1_JSR
     JSR     VALID_MODE_1
-    
     BTST    #5,D1
     BNE     MOVE_PRINT_IMMED_ADDR_11
-    
-    
-    
     JMP     MOVE_PRINT_DESTINATION
 
 MOVE_PRINT_DESTINATION
@@ -618,7 +625,7 @@ BRA_SECT        *First bits of condition are 0000. This means BRA.
     LEA     BRA_MESS,A1     *Outputs the message 'BRA'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 Bcc_001_SECT    *First bits of condition are 001.
     BTST    #8,D1
     BNE     BLS_SECT
@@ -626,7 +633,7 @@ BHI_SECT        *First bits of condition are 0010. This means BHI.
     LEA     BHI_MESS,A1     *Outputs the message 'BHI'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 Bcc_01_SECT     *First bits of condition are 01.
     BTST    #9,D1
     BNE     Bcc_011_SECT
@@ -637,7 +644,7 @@ BCC_SECT        *First bits of condition are 0100. This means BCC.
     LEA     BCC_MESS,A1     *Outputs the message 'BCC'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 Bcc_011_SECT    *First bits of condition are 011.
     BTST    #8,D1
     BNE     BEQ_SECT
@@ -645,7 +652,7 @@ BNE_SECT        *First bits of condition are 0110. This means BNE.
     LEA     BNE_MESS,A1     *Outputs the message 'BNE'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 Bcc_1_SECT      *First bit of condition is 1.
     BTST    #10,D1
     BNE     Bcc_11_SECT
@@ -659,7 +666,7 @@ BVC_SECT        *First bits of condition are 1000. This means BVC.
     LEA     BVC_MESS,A1     *Outputs the message 'BVC'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 Bcc_101_SECT    *First bits of condition are 101.
     BTST    #8,D1
     BNE     BMI_SECT
@@ -667,7 +674,7 @@ BPL_SECT        *First bits of condition are 1010. This means BPL.
     LEA     BPL_MESS,A1     *Outputs the message 'BPL'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 Bcc_11_SECT     *First bits of condition are 11.
     BTST    #9,D1
     BNE     Bcc_111_SECT
@@ -678,7 +685,7 @@ BGE_SECT        *First bits of condition are 1100. This means BGE.
     LEA     BGE_MESS,A1     *Outputs the message 'BGE'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 Bcc_111_SECT    *First bits of condition are 111.
     BTST    #8,D1
     BNE     BLE_SECT
@@ -686,43 +693,93 @@ BGT_SECT
     LEA     BGT_MESS,A1     *Outputs the message 'BGT'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 BLS_SECT
     LEA     BLS_MESS,A1     *Outputs the message 'BLS'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 BCS_SECT
     LEA     BCS_MESS,A1     *Outputs the message 'BCS'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 BVS_SECT
     LEA     BVS_MESS,A1     *Outputs the message 'BVS'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 BEQ_SECT
     LEA     BEQ_MESS,A1     *Outputs the message 'BEQ'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 BLT_SECT
     LEA     BLT_MESS,A1     *Outputs the message 'BLT'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 BLE_SECT
     LEA     BLE_MESS,A1     *Outputs the message 'BLE'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP    
+    JMP     Bcc_PRINT_DISPLACEMENT
 BMI_SECT
     LEA     BMI_MESS,A1     *Outputs the message 'BMI'.
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP
+    JMP     Bcc_PRINT_DISPLACEMENT
 
+Bcc_PRINT_DISPLACEMENT
+    
+    MOVE.L  D1,D4
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #'$',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    MOVE.L  #24,D6
+    LSL.L   D6,D1
+    MOVE.L  #24,D6
+    LSR.L   D6,D1
+    MOVE.B  $00,D7
+    CMP     D7,D1
+    BEQ     Bcc_PRINT_DISPLACEMENT_WORD
+    MOVE.B  $FF,D7
+    CMP     D7,D1
+    BEQ     Bcc_PRINT_DISPLACEMENT_LONG
+    
+    MOVE.B  #16,D2                   *Move 16 into D2 for base 16 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to print in hexadecimal  
+    TRAP    #15
+    JMP     RELOOP
+    
+Bcc_PRINT_DISPLACEMENT_WORD
+    MOVE.L  D4,D1
+    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+    CLR.L   D2
+    MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
+    MOVE.L  D6,D1
+    CLR.L   D2
+    MOVE.B  #16,D2                          *Print immediate addressing number
+    MOVE.B  #15,D0
+    TRAP    #15
+    JMP     RELOOP
+    
+Bcc_PRINT_DISPLACEMENT_LONG
+    MOVE.L  D4,D1
+    MOVE.L  (A2)+,D6               *This gets the remaining word from the function
+    CLR.L   D2
+    MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
+    MOVE.L  D6,D1
+    CLR.L   D2
+    MOVE.B  #16,D2                          *Print immediate addressing number
+    MOVE.B  #15,D0
+    TRAP    #15
+    JMP     RELOOP
+    
 *End of Condition Section **********************************************
 
 BIN_1_SECOND    *Possibilities are SUB, DIVU, OR, CMP ADD, ADDA, MULS, AND, LSL, LSR, ASR, ASL, ROL, and ROR.
@@ -931,6 +988,7 @@ ADD_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    *JSR     PRINT_OPMODE_ADD_DN_EA
     JMP     RELOOP
 
 ADDA_SECT
@@ -953,12 +1011,7 @@ ADDA_SECT
     BNE     PRINT_INVALID_OPCODE
 ADDA_VALID_SECT
     JSR     ADDA_PRINT_OPMODE               *Print the opmode
-    
-    
     JSR     ADDA_IMMEDIATE_ADDR_TEST        *Test to see if its immediate addressing, signaled with a #, if it is we need a different case
-    
-
-    
     JMP     RELOOP
     
     
@@ -1091,7 +1144,7 @@ CMP_SECT                    *Outputs the message 'CMP.'.
     AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%1011000000000000,D2   *Comparing with valid value.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
-    MOVE.B  #%11111111,D7       *Valid modes for this OPCode.
+    MOVE.B  #%11111111,D7           *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -1118,6 +1171,7 @@ SUB_EA_DN                   *This is ADD with the OPMode bieng <ea> -> Dn
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_ADD_EA_DN
     JMP     RELOOP  
 SUB_DN_EA                   *This is ADD with the OPMode bieng Dn -> <ea>
     MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
