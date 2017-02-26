@@ -6,6 +6,12 @@
 *-----------------------------------------------------------
     ORG    $1000
 START:                  ; first instruction of program
+             LEA MESSAGE0,A1
+             MOVE.B  #14, D0
+             TRAP    #15
+GO_AGAIN
+             CLR.L   D3
+             CLR.L   D4
              LEA MESSAGE1,A1
              MOVE.B  #14, D0
              TRAP    #15
@@ -22,7 +28,6 @@ START:                  ; first instruction of program
              MOVE.B  #2,D0            ;This picks the trap task for input of a string
              TRAP    #15
              JSR    HEXINPUT
-
 CHECKADDRESS 
              CMP.L      D4,D3
              BLT        OUTPUT_ERRORMESSAGE1
@@ -32,26 +37,43 @@ CHECKADDRESS
              JSR         OUTPUT_HEXADECIMAL
              MOVE.L      A3,D2
              JSR         OUTPUT_HEXADECIMAL
+             
+ENDMESSAGE  
+            LEA     ENDOFPROGRAM,A1
+            MOVE.B  #14,D0
+            TRAP    #15
+            MOVE.B  #5,D0
+            TRAP    #15
+            LEA     NEWLINE,A1
+            MOVE.B  #14,D0
+            TRAP    #15
+            CMP.B   #'y',D1
+            BEQ     GO_AGAIN
+            CMP.B   #'n',D1
+            BEQ     QUIT
+            BRA     ENDMESSAGE
 
-REMOVE_ZEROS
+REMOVE_ZEROS_START                      ;Used by Output Hexadecimal. Assumes value isn't zero, because that subroutine checks if it is.
+             MOVE.L     D5,-(SP)        ;Restoring the values stored in the Stack
+REMOVE_ZEROS                            ;Removing the leading zeros
              MOVE.L     D3,D5
              LSR.L      D4,D5
              AND.B      #$0F,D5
              CMP.B      #0,D5
              BEQ        REMOVE_ZERO
-             BRA        FINISHED_REMOVING_ZEROS
+             MOVE.L     (SP)+,D5
+             RTS
              
 REMOVE_ZERO
              SUB.B      #4,D4          
              BRA        REMOVE_ZEROS    
 OUTPUT_HEXADECIMAL  *Subroutine for outputting a hexadecimal number.
-            
+            MOVEM.L D3-D4,-(SP)
             CMP.L   #0,D2
             BEQ     OUTPUT0
             MOVE.L  D2,D3
             MOVE.L  #28,D4
-            BRA     REMOVE_ZEROS
-FINISHED_REMOVING_ZEROS
+            JSR     REMOVE_ZEROS_START
             LSR.L   D4,D3
             MULU    #6,D3
             LEA     OUTPUT_CHAR,A0
@@ -66,11 +88,10 @@ OUTPUT_LOOP
             AND.L   #$0F,D3 ;We are getting rid of everything that isn't the last 4 bits.
             MULU    #6,D3
             JSR     0(A0,D3)
-
+            BRA     OUTPUT_LOOP
 RETURN_CASE 
-            RTS
-            
-
+            MOVEM.L (SP)+,D3-D4
+            RTS            
             
 OUTPUT_CHAR JMP     OUTPUT0
             JMP     OUTPUT1
@@ -94,97 +115,97 @@ OUTPUT0
             MOVE.B  #'0',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
             
 OUTPUT1    
             MOVE.B  #'1',D1    ;Moves the character into D1   
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUT2
             MOVE.B  #'2',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUT3
             MOVE.B  #'3',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP           
+            RTS          
 
 OUTPUT4
             MOVE.B  #'4',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUT5
             MOVE.B  #'5',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUT6
             MOVE.B  #'6',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUT7
             MOVE.B  #'7',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUT8
             MOVE.B  #'8',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUT9 
            MOVE.B  #'9',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
-           BRA     OUTPUT_LOOP
+           RTS
 
 OUTPUTA
            MOVE.B  #'A',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
-           BRA     OUTPUT_LOOP
+           RTS
 
 OUTPUTB
            MOVE.B  #'B',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
-           BRA     OUTPUT_LOOP
+           RTS
 
 OUTPUTC
            MOVE.B  #'C',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
-           BRA     OUTPUT_LOOP
+           RTS
 
 OUTPUTD
             MOVE.B  #'D',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUTE
             MOVE.B  #'E',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
 
 OUTPUTF
             MOVE.B  #'F',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-            BRA     OUTPUT_LOOP
+            RTS
             
                
 HEXINPUT             
@@ -239,12 +260,18 @@ STRINGEND     RTS
 OUTPUT_ERRORMESSAGE1
               LEA    ERRORMESSAGE1,A1
               MOVE.B  #14, D0
-              TRAP    #15                 
-        
-MESSAGE1         DC.B 'Please enter a starting address for your program',0
-MESSAGE2         DC.B 'Please enter an ending address for your program',0
-ERRORMESSAGE1    DC.B 'Your ending address is less than the starting address',0
-
+              TRAP    #15   
+              BRA    GO_AGAIN              
+CR      EQU     $0D             ASCII code for Carriage Return
+LF      EQU     $0A             ASCII code for Line Feed 
+MESSAGE0         DC.B 'Welcome to Disassembler.',CR,LF,'Created by: Abhi Trivedi, Conor Van Achte, and Samuel Meyerding.',CR,LF,0       
+MESSAGE1         DC.B 'Please enter a starting address for your program: ',0
+MESSAGE2         DC.B 'Please enter an ending address for your program: ',0
+ERRORMESSAGE1    DC.B 'Your ending address is less than the starting address',CR,LF,0
+ENDOFPROGRAM     DC.B 'Do you want to disassemble some more memory? (y/n)',CR,LF,0
+NEWLINE          DC.B CR,LF,0
+    
+QUIT
 
 * Put program code here
 
