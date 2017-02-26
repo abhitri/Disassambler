@@ -21,12 +21,40 @@ START:                  ; first instruction of program
 *    BEQ     DO_NOTHING
     
 DO_NOTHING
-    ADD.B   -(A3),D5
-    SUB.B   -(A3),D5
-    add.l D4,(A3)
-    CMP.B   #3,D3
-    CMP.L   (A3),D5
-    CMP.W   #$1234,D6
+*    ADD.B   -(A3),D5
+*    SUB.B   -(A3),D5
+*    add.l D4,(A3)
+*    CMP.B   #3,D3
+*    CMP.L   (A3),D5
+*    CMP.W   #$1234,D6
+*    MOVE.L  #$12348999,D3
+*    MOVE.W  #$5678,D4
+    
+    MOVE.B  #1,D1
+    LSR.L   D1,D2
+    LSL.W   D1,D2
+    ASR.B   D1,D2
+    ASL.W   D1,D2
+*    MOVE.L #$1234,D4
+*    MOVE.L  #1,D3
+*    DIVU   D3,D4
+*    DIVU.W   D3,D4
+*    DIVU  D4,D5
+*    
+*    MOVE.L #$1234,D4 
+*    DIVU  #$1234,D4
+*    
+*    DIVU.W  #2,D4
+*    DIVU.W  D3,D4
+*
+*    MULS   D3,D4
+*    MULS  D4,D5
+*    
+*    MOVE.L #$1234,D4 
+*    MULS  #$1234,D4
+*    
+*    MULS.W  #2,D4
+*    MULS.W  D3,D4
 *    ADD.B   #4,D1
 *    SUB.B   #68,D1
 *    SUB.B   D3,D4
@@ -48,7 +76,7 @@ DO_NOTHING
 *       MOVEA.L   A1,A2
 *       MOVEA.L   D1,A2
 *       MOVEA.L   #2,A2
-
+        
        MOVEA.L   #$345D,A4
        *MOVEA.W   (A4)+,A3
        *MOVEA.L   -(A2),A5
@@ -609,7 +637,7 @@ CLR_PRINT_WORD
 BIN_011_FOURTH  *Possibilities are Bcc and MOVEQ.
     BTST    #12,D1
     BNE     MOVEQ_SECT
-*Condition Section.**********************************************
+*Condition Section.****************************************
 
 B_COND_SECT     *It has been determined to be a Conditional Branch. Now to determine the condition.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
@@ -891,6 +919,7 @@ ASR_REG_SECT        *Output the message 'ASR.'.
     LEA     ASR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    JSR     LSL_LSR_PRINT
     JMP     RELOOP
 LSL_LSR_REG_SECT    *Logical Shift. Determines direction.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
@@ -903,7 +932,91 @@ LSR_REG_SECT        *Output the message 'LSR.'.
     LEA     LSR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
-    JMP     RELOOP    
+    JSR     LSL_LSR_PRINT
+    JMP     RELOOP
+
+
+LSL_LSR_PRINT
+    BTST    #5,D1                       *If it is 01, iLSL_LSR_PRINT_LONGt is
+    BEQ     LSL_LSR_PRINT_IMMED
+    BTST    #7,D1                       *Check the size, if it is a 1, it is a long
+    BNE     LSL_LSR_PRINT_LONG
+    BTST    #6,D1                       *If it is 01, it is a word address
+    BNE     LSL_LSR_PRINT_WORD
+                                        *If it gets through both tests it is byte addressing
+    MOVE.L  D1,D4
+    MOVE.B  #'B',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    JMP     LSL_LSR_PRINT_Dx
+    
+LSL_LSR_PRINT_WORD
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    JMP     LSL_LSR_PRINT_Dx
+    
+LSL_LSR_PRINT_LONG
+    MOVE.L  D1,D4
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    JMP     LSL_LSR_PRINT_Dx
+    
+LSL_LSR_PRINT_Dx
+    MOVE.B  #' ',D1                        
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+
+    MOVE.B  #'D',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+     
+    MOVE.L  D4,D1
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #'D',D1 
+                             
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.L  D4,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSL.L   D6,D1
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+    RTS
+    
+LSL_LSR_PRINT_IMMED
+
+
+
+    RTS
 ROL_ROR_REG_SECT    *Rotation. Determines direction.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
     AND.W   #%1111000000011000,D2   *Isolating bits for detrmining validity of OPCode.
@@ -1201,6 +1314,7 @@ DIVU_SECT                   *Outputs the message 'DIVU.'.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_MULS_EA_DN
     JMP     RELOOP 
 MOVEA_SECT
     LEA     MOVEA_MESS,A1   *Outputs the message 'MOVEA.'.
@@ -1581,9 +1695,89 @@ MOVEQ_PRINT
     TRAP    #15
     
     JMP     RELOOP
- 
+
+
+OPMODE_MULS_EA_DN_TEST_WORD
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
     
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+
+    BTST    #5,D1
     
+    BEQ     VALID_MODE_0_MULS_EA_DN
+    JSR     VALID_MODE_1
+    
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+    MOVE.W  D4,D1
+    JMP     RELOOP
+    
+OPMODE_MULS_EA_DN_TEST_LONG
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+
+    MOVE.B  #20,D2                      
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+
+    MOVE.B   #6,D0   *Picking TRAP task #6. 
+    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
+    TRAP     #15     *Output individual character.
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.W  D4,D1
+
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_MULS_EA_DN
+    JSR     VALID_MODE_1
+    
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
 MULS_SECT
     LEA     MULS_MESS,A1    *Output the message 'MULS.'.
     MOVE.B  #14,D0      
@@ -1596,16 +1790,38 @@ MULS_SECT
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
+    JSR     PRINT_OPMODE_MULS_EA_DN
     JMP     RELOOP
+    
+PRINT_OPMODE_MULS_EA_DN
+    BTST    #7,D1
+    BNE     OPMODE_MULS_EA_DN_TEST_WORD
+    JMP     OPMODE_MULS_EA_DN_TEST_LONG
+
+
+VALID_MODE_0_MULS_EA_DN
+    JSR     VALID_MODE_0
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #'D',D1
+    TRAP    #15
+    MOVE.W  D4,D1
+    JSR     DN_REGISTER
+    JMP     RELOOP
+
 LSL_REG_SECT                    *Output the message 'LSL.'.
     LEA     LSL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    JSR     LSL_LSR_PRINT
     JMP     RELOOP
 ASL_REG_SECT                    *Output the message 'ASL.'.
     LEA     ASL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    JSR     LSL_LSR_PRINT
     JMP     RELOOP
 ROL_REG_SECT                    *Output the message 'ROL.'.
     LEA     ROL_MESS,A1
