@@ -35,6 +35,8 @@ DO_NOTHING
     LSL.W   D1,D2
     ASR.B   D1,D2
     ASL.W   D1,D2
+    ROL.W    D1,D2
+    ROR.W    D1,D2
 *    MOVE.L #$1234,D4
 *    MOVE.L  #1,D3
 *    DIVU   D3,D4
@@ -1028,6 +1030,7 @@ ROR_REG_SECT        *Output the message 'ROR.'.
     LEA     ROR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    JSR     LSL_LSR_PRINT
     JMP     RELOOP
 ASR_ASL_MEM_SECT    *Arithmeitc shift. Determines direction.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
@@ -1827,6 +1830,7 @@ ROL_REG_SECT                    *Output the message 'ROL.'.
     LEA     ROL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    JSR     LSL_LSR_PRINT
     JMP     RELOOP
 LSL_MEM_SECT                    *Output the message 'LSL.'.
     LEA     LSL_MESS,A1
@@ -2933,6 +2937,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 *~Font name~Courier New~
 *~Font size~10~
