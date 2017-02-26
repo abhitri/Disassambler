@@ -32,11 +32,19 @@ DO_NOTHING
     
     *MOVE.B  #1,D1
     *LSR.L   D1,D2
-    *LSL.W   D1,D2
-    *ASR.B   D1,D2
-    *ASL.W   D1,D2
-    *ROL.W    D1,D2
-    *ROR.W    D1,D2
+*    LSL.W   D1,D2
+*    ASR.B   D1,D2
+*    ASL.W   D1,D2
+*    ROL.W    D1,D2
+*    ROR.W    D1,D2
+    
+*    LSR.L   #1,D2
+    LSL.W   #1,D2
+    ASR.B   #1,D2
+    ASL.W   #1,D2
+    ROL.W    #1,D2
+    ROR.W    #1,D2
+
 *    MOVE.L #$1234,D4
 *    MOVE.L  #1,D3
 *    DIVU   D3,D4
@@ -114,7 +122,7 @@ DO_NOTHING
        *MOVE.L    D7,D3
               
        *MOVE.L    #$123,D7
-*
+
 *       
 *      
 *       MOVE.B    #12,D3
@@ -1043,9 +1051,88 @@ LSL_LSR_PRINT_Dx
     TRAP    #15
     
     RTS
-    
-LSL_LSR_PRINT_IMMED
+LSL_LSR_PRINT_IMMED_LONG
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1
+    TRAP    #15
+    MOVE.B  #'#',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
 
+    MOVE.L  D4,D1
+    JSR     LSL_LSR_PRINT_Dy
+    JMP     RELOOP
+LSL_LSR_PRINT_IMMED_WORD
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1
+    TRAP    #15
+    MOVE.B  #'#',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.L  D4,D1
+    JSR     LSL_LSR_PRINT_Dy
+    JMP     RELOOP
+LSL_LSR_PRINT_IMMED
+    MOVE.L  D1,D4
+    BTST    #7,D1
+    BNE     LSL_LSR_PRINT_IMMED_LONG
+    BTST    #6,D1
+    BNE     LSL_LSR_PRINT_IMMED_WORD
+    MOVE.B  #'B',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1
+    TRAP    #15
+    MOVE.B  #'#',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.L  D4,D1
+    JSR     LSL_LSR_PRINT_Dy
+    JMP     RELOOP
+    
+     
+LSL_LSR_PRINT_Dy
+   MOVE.L  D4,D1
+    
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    
+
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.B  #'D',D1 
+                             
+    MOVE.B  #6,D0
+    TRAP    #15
+    
+    MOVE.L  D4,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSL.L   D6,D1
+    LSR.L   D6,D1
+    
+    CLR.L   D2
+    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
+    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.L  D4,D1
 
 
     RTS
@@ -1073,6 +1160,18 @@ ASR_MEM_SECT        *Output the message 'ASR.'.
     LEA     ASR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1
     JMP     RELOOP
 LSL_LSR_MEM_SECT    *Logical Shift. Determines direction.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
@@ -1085,6 +1184,17 @@ LSR_MEM_SECT        *Output the message 'LSR.'.
     LEA     LSR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+        MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1
     JMP     RELOOP    
 ROL_ROR_MEM_SECT    *Rotation. Determines direction.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
@@ -1097,6 +1207,19 @@ ROR_MEM_SECT        *Output the message 'ROR.'.
     LEA     ROR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    BTST    #5,D1
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1 
     JMP     RELOOP
 MEM_SHIFTS      *This is a memory shift.
     MOVE.B  #%11110100,D7       *Valid modes for this OPCode.
@@ -1849,6 +1972,18 @@ LSL_REG_SECT                    *Output the message 'LSL.'.
     MOVE.B  #14,D0      
     TRAP    #15
     JSR     LSL_LSR_PRINT
+    
+*    MOVE.L  D1,D4
+*    MOVE.B  #'W',D1
+*    MOVE.B  #6,D0
+*    TRAP    #15
+*    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+*    MOVE.B  #6,D0
+*    TRAP    #15
+*    MOVE.L  D4,D1
+*    BEQ     VALID_MODE_0_JSR
+*    
+*    JSR     VALID_MODE_1
     JMP     RELOOP
 ASL_REG_SECT                    *Output the message 'ASL.'.
     LEA     ASL_MESS,A1
@@ -1866,16 +2001,51 @@ LSL_MEM_SECT                    *Output the message 'LSL.'.
     LEA     LSL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1
     JMP     RELOOP
 ASL_MEM_SECT                    *Output the message 'ASL.'.
     LEA     ASL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1
     JMP     RELOOP
 ROL_MEM_SECT                    *Output the message 'ROL.'.
     LEA     ROL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
+     MOVE.L  D1,D4
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    BEQ     VALID_MODE_0_JSR
+    
+    JSR     VALID_MODE_1
     JMP     RELOOP
 TRAP_SECT
     LEA     TRAP_MESS,A1    *Output the message 'TRAP'.
@@ -2970,6 +3140,10 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
