@@ -13,7 +13,8 @@ START:                  ; first instruction of program
              MOVE.B  #2,D0            ;This picks the trap task for input of a string
              TRAP    #15
              JSR    HEXINPUT
-
+             MOVE.L  D3,D4
+             CLR.L   D3
              LEA MESSAGE2,A1
              MOVE.B  #14,D0
              TRAP    #15
@@ -23,15 +24,34 @@ START:                  ; first instruction of program
              JSR    HEXINPUT
 
 CHECKADDRESS 
-             MOVE.L    D3,D4
-             CMP.L      D3,D4
-             BGT        ERRORMESSAGE1
+             CMP.L      D4,D3
+             BLT        OUTPUT_ERRORMESSAGE1
+             MOVEA.L     D4,A2
+             MOVEA.L     D3,A3
+             MOVE.L      A2,D2
+             JSR         OUTPUT_HEXADECIMAL
+             MOVE.L      A3,D2
+             JSR         OUTPUT_HEXADECIMAL
+
+REMOVE_ZEROS
+             MOVE.L     D3,D5
+             LSR.L      D4,D5
+             AND.B      #$0F,D5
+             CMP.B      #0,D5
+             BEQ        REMOVE_ZERO
+             BRA        FINISHED_REMOVING_ZEROS
              
-OUTPUT_HEXADECIMAL  
+REMOVE_ZERO
+             SUB.B      #4,D4          
+             BRA        REMOVE_ZEROS    
+OUTPUT_HEXADECIMAL  *Subroutine for outputting a hexadecimal number.
+            
             CMP.L   #0,D2
             BEQ     OUTPUT0
             MOVE.L  D2,D3
             MOVE.L  #28,D4
+            BRA     REMOVE_ZEROS
+FINISHED_REMOVING_ZEROS
             LSR.L   D4,D3
             MULU    #6,D3
             LEA     OUTPUT_CHAR,A0
@@ -39,15 +59,16 @@ OUTPUT_HEXADECIMAL
 
 OUTPUT_LOOP  
             SUB.B   #4,D4   ;Changes the amount we are shifting by, in this case by 4
-            CMP.L   #0,D4
+            CMP.B   #0,D4
             BLT     RETURN_CASE
             MOVE.L  D2,D3
             LSR.L   D4,D3
-            AND.B   #$0F,D3 ;We are getting rid of everything that isn't the last 4 bits. 
+            AND.L   #$0F,D3 ;We are getting rid of everything that isn't the last 4 bits.
+            MULU    #6,D3
             JSR     0(A0,D3)
 
-RETURN_CASE RTS
-            
+RETURN_CASE 
+            RTS
             
 
             
@@ -73,96 +94,97 @@ OUTPUT0
             MOVE.B  #'0',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-        
+            BRA     OUTPUT_LOOP
             
 OUTPUT1    
             MOVE.B  #'1',D1    ;Moves the character into D1   
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUT2
             MOVE.B  #'2',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
+            BRA     OUTPUT_LOOP
 
 OUTPUT3
             MOVE.B  #'3',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
- 
-            
+            BRA     OUTPUT_LOOP           
 
 OUTPUT4
             MOVE.B  #'4',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUT5
             MOVE.B  #'5',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUT6
             MOVE.B  #'6',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUT7
             MOVE.B  #'7',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUT8
             MOVE.B  #'8',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUT9 
            MOVE.B  #'9',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
-
+           BRA     OUTPUT_LOOP
 
 OUTPUTA
            MOVE.B  #'A',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
-
+           BRA     OUTPUT_LOOP
 
 OUTPUTB
            MOVE.B  #'B',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
+           BRA     OUTPUT_LOOP
 
 OUTPUTC
            MOVE.B  #'C',D1    ;Moves the character into D1
            MOVE.B  #6,  D0    ;This trap task prints out character in D1
            TRAP    #15        ;This outputs to the output window
- 
+           BRA     OUTPUT_LOOP
 
 OUTPUTD
             MOVE.B  #'D',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUTE
             MOVE.B  #'E',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
 
 OUTPUTF
             MOVE.B  #'F',D1    ;Moves the character into D1
             MOVE.B  #6,  D0    ;This trap task prints out character in D1
             TRAP    #15        ;This outputs to the output window
-
+            BRA     OUTPUT_LOOP
             
                
 HEXINPUT             
@@ -214,14 +236,14 @@ STRINGEND     RTS
             
 
 
-        
-        
-        
+OUTPUT_ERRORMESSAGE1
+              LEA    ERRORMESSAGE1,A1
+              MOVE.B  #14, D0
+              TRAP    #15                 
         
 MESSAGE1         DC.B 'Please enter a starting address for your program',0
 MESSAGE2         DC.B 'Please enter an ending address for your program',0
-ERRORMESSAGE1    DC.B 'Your ending address is greater than the starting address',0
-ERRORMESSAGE2    DC.B 'Your starting address is less than the ending address',0
+ERRORMESSAGE1    DC.B 'Your ending address is less than the starting address',0
 
 
 * Put program code here
@@ -231,6 +253,7 @@ ERRORMESSAGE2    DC.B 'Your starting address is less than the ending address',0
 * Put variables and constants here
 
     END    START        ; last line of source
+
 
 
 
