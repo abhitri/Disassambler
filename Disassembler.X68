@@ -30,13 +30,13 @@ DO_NOTHING
 *    MOVE.L  #$12348999,D3
 *    MOVE.W  #$5678,D4
     
-    MOVE.B  #1,D1
-    LSR.L   D1,D2
-    LSL.W   D1,D2
-    ASR.B   D1,D2
-    ASL.W   D1,D2
-    ROL.W    D1,D2
-    ROR.W    D1,D2
+    *MOVE.B  #1,D1
+    *LSR.L   D1,D2
+    *LSL.W   D1,D2
+    *ASR.B   D1,D2
+    *ASL.W   D1,D2
+    *ROL.W    D1,D2
+    *ROR.W    D1,D2
 *    MOVE.L #$1234,D4
 *    MOVE.L  #1,D3
 *    DIVU   D3,D4
@@ -79,41 +79,41 @@ DO_NOTHING
 *       MOVEA.L   D1,A2
 *       MOVEA.L   #2,A2
         
-       MOVEA.L   #$345D,A4
+       *MOVEA.L   #$345D,A4
        *MOVEA.W   (A4)+,A3
        *MOVEA.L   -(A2),A5
-       ADDA.L   #$11111111,A2
-       ADDA.L   #$1111,A2
-       ADDA.W   #223,A2
-       ADDA.L   A1,A2
-       ADDA.L   D1,A2
-       ADDA.L   #2,A2
-       ADDA.L   #223,A2
+       *ADDA.L   #$11111111,A2
+       *ADDA.L   #$1111,A2
+       *ADDA.W   #223,A2
+       *ADDA.L   A1,A2
+       *ADDA.L   D1,A2
+       *ADDA.L   #2,A2
+       *ADDA.L   #223,A2
 
-       ADDA.W   A5,A7
-       ADDA.W   A2,A5
+       *ADDA.W   A5,A7
+       *ADDA.W   A2,A5
        
-       MOVEA.W   A5,A7
-       MOVEA.W   #16,A5
-       MOVEA.L   A2,A5
+       *MOVEA.W   A5,A7
+       *MOVEA.W   #16,A5
+       *MOVEA.L   A2,A5
        *MOVEA.L   -(A2),A5
        
-       MOVEQ     #7,D2
-       MOVEQ     #2,D5
-       MOVEQ     #5,D3
+       *MOVEQ     #7,D2
+       *MOVEQ     #2,D5
+       *MOVEQ     #5,D3
        
-       MOVE.L    #$123,D5
-       MOVE.L    #$1237,D7
+       *MOVE.L    #$123,D5
+       *MOVE.L    #$1237,D7
        
-       MOVE.W    #$1231,D7
-       MOVE.L    #$12311111,D7
-       MOVE.L    #$567123,D5
+       *MOVE.W    #$1231,D7
+       *MOVE.L    #$12311111,D7
+       *MOVE.L    #$567123,D5
 
-       MOVE.B    D2,D3
-       MOVE.W    D1,D4
-       MOVE.L    D7,D3
+       *MOVE.B    D2,D3
+       *MOVE.W    D1,D4
+       *MOVE.L    D7,D3
               
-       MOVE.L    #$123,D7
+       *MOVE.L    #$123,D7
 *
 *       
 *      
@@ -126,21 +126,21 @@ DO_NOTHING
 *       MOVE.L    #$167,D3
 *    
 *       MOVEM     (A5),D0-D1
-       MOVEQ     #1,D1
-       MOVEQ     #5,D3
-       MOVEQ     #0,D6
-       MOVEQ     #3,D1
+       *MOVEQ     #1,D1
+       *MOVEQ     #5,D3
+       *MOVEQ     #0,D6
+       *MOVEQ     #3,D1
 *       
 *       
-       ADDA.L   #$11111111,A2
-       ADDA.L   #$1111,A2
-       ADDA.W   #223,A2
-       ADDA.L   A1,A2
-       ADDA.L   D1,A2
-       ADDA.L   #2,A2
-       ADDA.L   #223,A2
-       ADDA.W   A5,A7
-       ADDA.W   A2,A5
+       *ADDA.L   #$11111111,A2
+       *ADDA.L   #$1111,A2
+       *ADDA.W   #223,A2
+       *ADDA.L   A1,A2
+       *ADDA.L   D1,A2
+       *ADDA.L   #2,A2
+       *ADDA.L   #223,A2
+       *ADDA.W   A5,A7
+       *ADDA.W   A2,A5
 *       ADDA.W   (A4)+,A3
        *ADDA.L   -(A2),A5
        
@@ -148,14 +148,14 @@ DO_NOTHING
 *       MOVEA.W   (A4)+,A3
 *       MOVEA.L   -(A2),A5
        
-       BTST     #0,D1
-       BTST     #6,(A6)
-       BTST     #12,(A5)+
-       BTST     #3,-(A4)
-       BTST     #2,$1234
-       BTST     #7,$12341234
-       BTST     D2,D7
-       BTST     D3,#4
+       *BTST     #0,D1
+       *BTST     #6,(A6)
+       *BTST     #12,(A5)+
+       *BTST     #3,-(A4)
+       *BTST     #2,$1234
+       *BTST     #7,$12341234
+       *BTST     D2,D7
+       *BTST     D3,#4
        
        *ADD.L    D1,D2
        *ADD.B    D5,D7
@@ -204,18 +204,48 @@ DO_NOTHING
 * All have been tested.
        *AND.W    D1,D2
        *BTST     D1,#4
+       MOVEA    $9000,A1
        LSL.W    D1,D2
        LSR.W    D1,D2
        ASL.W    D1,D2
        ASR.W    D1,D2
        ROL.W    D1,D2
        ROR.W    D1,D2
-       LSL.W    $0
-       LSR.W    $0
-       ASL.W    $0
-       ASR.W    $0
-       ROL.W    $0
-       ROR.W    $0
+       
+       LSL      $0 *Word is only valid case.
+       LSR      $0
+       ASL      $0
+       ASR      $0
+       ROL      $0
+       ROR      $0
+       
+       LSL      $10000 *Word is only valid case.
+       LSR      $10000
+       ASL      $10000
+       ASR      $10000
+       ROL      $10000
+       ROR      $10000
+       
+       LSL      (A1) *Word is only valid case.
+       LSR      (A1)
+       ASL      (A1)
+       ASR      (A1)
+       ROL      (A1)
+       ROR      (A1)
+       
+       LSL      (A1)+ *Word is only valid case.
+       LSR      (A1)+
+       ASL      (A1)+
+       ASR      (A1)+
+       ROL      (A1)+
+       ROR      (A1)+
+       
+       LSL      -(A1) *Word is only valid case.
+       LSR      -(A1)
+       ASL      -(A1)
+       ASR      -(A1)
+       ROL      -(A1)
+       ROR      -(A1)
 
        OR.L     D1,D0
        SUB.L    D0,D1
@@ -310,7 +340,7 @@ STRINGEND
                 
 SKIP                                  
     MOVE.L  #$1000,A2       *Starting address for code to be disassembled.
-    MOVE.L  #$2000,A3
+    MOVE.L  #$3000,A3
 RELOOP
     CMP.L   A2,A3
     BEQ     DIS_END
@@ -777,10 +807,10 @@ Bcc_PRINT_DISPLACEMENT
     LSL.L   D6,D1
     MOVE.L  #24,D6
     LSR.L   D6,D1
-    MOVE.B  $00,D7
+    MOVE.B  #$00,D7
     CMP     D7,D1
     BEQ     Bcc_PRINT_DISPLACEMENT_WORD
-    MOVE.B  $FF,D7
+    MOVE.B  #$FF,D7
     CMP     D7,D1
     BEQ     Bcc_PRINT_DISPLACEMENT_LONG
     
@@ -2937,6 +2967,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 *~Font name~Courier New~
