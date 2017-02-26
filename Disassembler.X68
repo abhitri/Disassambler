@@ -39,6 +39,9 @@ DO_NOTHING
 *    ROR.W    D1,D2
     
 *    LSR.L   #1,D2
+
+    MOVEM.L  D0-D7,-(A7)
+    MOVEM.L  (A7)+,D0-D7
     LSL.W   #1,D2
     ASR.B   #1,D2
     ASL.W   #1,D2
@@ -1696,7 +1699,33 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     AND.W   #%1111101110000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%0100100010000000,D2   *Comparing with valid value.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
-    JMP     RELOOP 
+    
+    JSR     TEST_LONG_WORD
+    
+    
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_MOVEM_REG_MEM_JSR 
+    
+    JSR     VALID_MODE_1
+    JSR     JSR_COMMA
+    
+    JSR     MOVEM_PRINT_LIST
+    
+    JMP     RELOOP
+
+
+   
+TEST_LONG_WORD
+    MOVE.L  D1,D4
+    BTST    #6,D1
+    BNE     MOVEM_PRINT_LONG_JSR
+    
+    
+    RTS
+MOVEM_PRINT_LONG_JSR
+    JSR     MOVEM_PRINT_LONG
+    RTS
+    
 MOVEM_MEM_REG               *Direction of transfer is memory to register.
     LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
     MOVE.B  #14,D0      
@@ -1705,7 +1734,76 @@ MOVEM_MEM_REG               *Direction of transfer is memory to register.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
-    JMP     RELOOP 
+    
+    
+    
+    BTST    #6,D1
+    BNE     MOVEM_PRINT_LONG
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'W',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_MOVEM_JSR
+    
+    JSR     VALID_MODE_1
+    
+    JSR     JSR_COMMA
+    
+    JSR     MOVEM_PRINT_LIST
+    
+    JMP     RELOOP
+   
+JSR_COMMA  
+
+    MOVE.L  D1,D4
+    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    RTS
+VALID_MODE_0_MOVEM_JSR 
+    JSR     VALID_MODE_0
+    
+    JSR     MOVEM_PRINT_LIST
+    JMP     RELOOP
+    
+VALID_MODE_0_MOVEM_REG_MEM_JSR 
+    JSR     VALID_MODE_0
+    
+    JSR     JSR_COMMA
+    JMP     RELOOP
+MOVEM_PRINT_LONG
+    
+    MOVE.L  D1,D4
+    MOVE.B  #'L',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  D4,D1
+    
+    
+*    BTST    #5,D1
+*    BEQ     VALID_MODE_0_MOVEM_JSR
+*    
+*    JSR     VALID_MODE_1
+    
+    RTS
+   
+MOVEM_PRINT_LIST
+    MOVE.W  (A2)+,D6         *Get the remaining word
+    
+    
+    
+    RTS
 JSR_SECT    
     LEA     JSR_MESS,A1     *Outputs the message 'JSR'.
     MOVE.B  #14,D0      
