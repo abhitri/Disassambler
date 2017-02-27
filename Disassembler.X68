@@ -3138,7 +3138,7 @@ REMOVE_ZERO
 OUTPUT_HEXADECIMAL  *Subroutine for outputting a hexadecimal number.
             MOVEM.L D3-D4,-(SP)
             CMP.L   #0,D2
-            BEQ     OUTPUT0
+            BEQ     VALUE_ZERO
             MOVE.L  D2,D3
             MOVE.L  #28,D4
             JSR     REMOVE_ZEROS_START
@@ -3157,6 +3157,8 @@ OUTPUT_LOOP
             MULU    #6,D3
             JSR     0(A0,D3)
             BRA     OUTPUT_LOOP
+VALUE_ZERO
+            JSR     OUTPUT0
 RETURN_CASE 
             MOVEM.L (SP)+,D3-D4
             RTS            
@@ -3377,6 +3379,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 *~Font name~Courier New~
 *~Font size~10~
