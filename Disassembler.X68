@@ -15,12 +15,18 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 START:                  ; first instruction of program
 
 *Testing Code
-
+*       LSL      $8 *Word is only valid case.
+*       LSR      $0
+*       ASL      $0
+*       ASR      $0
+*       ROL      $0
+*       ROR      $0
+*       LSL.L    #8,D3
 *    BRA     DO_NOTHING
 *    CMP     #0,D3
 *    BEQ     DO_NOTHING
     
-DO_NOTHING
+*DO_NOTHING
 *    ADD.B   -(A3),D5
 *    SUB.B   -(A3),D5
 *    add.l D4,(A3)
@@ -40,8 +46,8 @@ DO_NOTHING
     
 *    LSR.L   #1,D2
 
-    *MOVEM.L  D0-D7,-(A7)
-    *MOVEM.L  (A7)+,D0-D7
+    MOVEM.L  D0-D7,-(A7)
+    MOVEM.L  (A7)+,D0-D7
     LSL.W   #1,D2
     ASR.B   #1,D2
     ASL.W   #1,D2
@@ -1038,6 +1044,7 @@ LSL_LSR_PRINT_IMMED_LONG
     TRAP    #15
 
     MOVE.L  D4,D1
+    
     JSR     LSL_LSR_PRINT_Dy
     JMP     RELOOP
 LSL_LSR_PRINT_IMMED_WORD
@@ -1051,6 +1058,16 @@ LSL_LSR_PRINT_IMMED_WORD
     TRAP    #15
 
     MOVE.L  D4,D1
+     CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CMP     #0,D1
+    BEQ     LSL_LSR_PRINT_IMMED_8
+    
     JSR     LSL_LSR_PRINT_Dy
     JMP     RELOOP
 LSL_LSR_PRINT_IMMED
@@ -1069,12 +1086,29 @@ LSL_LSR_PRINT_IMMED
     TRAP    #15
 
     MOVE.L  D4,D1
+    
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CMP     #0,D1
+    BEQ     LSL_LSR_PRINT_IMMED_8
+    
     JSR     LSL_LSR_PRINT_Dy
     JMP     RELOOP
     
-     
+    
+LSL_LSR_PRINT_IMMED_8
+    MOVE.B  #'8',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    JMP     RELOOP
+    
 LSL_LSR_PRINT_Dy
-   MOVE.L  D4,D1
+    MOVE.L  D4,D1
     
     CLR.L   D6
     MOVE.B  #20,D6
@@ -1164,6 +1198,9 @@ LSR_MEM_SECT        *Output the message 'LSR.'.
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.L  D4,D1
+    BTST    #5,D1
+    BEQ     LSL_LSR_PRINT_Dx
+
     BEQ     VALID_MODE_0_JSR
     
     JSR     VALID_MODE_1
@@ -1660,14 +1697,15 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     
     JSR     TEST_LONG_WORD
     
-    
+    JSR     MOVEM_PRINT_LIST
+    JSR     JSR_COMMA
     BTST    #5,D1
     BEQ     VALID_MODE_0_MOVEM_REG_MEM_JSR 
     
     JSR     VALID_MODE_1
-    JSR     JSR_COMMA
+
     
-    JSR     MOVEM_PRINT_LIST
+
     
     JMP     RELOOP
 
@@ -1684,6 +1722,20 @@ MOVEM_PRINT_LONG_JSR
     JSR     MOVEM_PRINT_LONG
     RTS
     
+MOVEM_PRINT_LONG_JSR_RELOOP
+    JSR     MOVEM_PRINT_LONG
+    
+
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_MOVEM_REG_MEM_JSR 
+    
+    JSR     VALID_MODE_1
+    
+    JSR     JSR_COMMA
+    JSR     MOVEM_PRINT_LIST
+    
+    JMP     RELOOP
+    
 MOVEM_MEM_REG               *Direction of transfer is memory to register.
     LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
     MOVE.B  #14,D0      
@@ -1696,7 +1748,7 @@ MOVEM_MEM_REG               *Direction of transfer is memory to register.
     
     
     BTST    #6,D1
-    BNE     MOVEM_PRINT_LONG
+    BNE     MOVEM_PRINT_LONG_JSR_RELOOP
     
     MOVE.L  D1,D4
     MOVE.B  #'W',D1                         *Print the number in hexadecimal form, addressing is in base 16
@@ -1758,7 +1810,7 @@ MOVEM_PRINT_LONG
    
 MOVEM_PRINT_LIST
     MOVE.W  (A2)+,D6         *Get the remaining word
-    
+    MOVE.L  #15,
     
     
     RTS
@@ -2060,6 +2112,8 @@ LSL_MEM_SECT                    *Output the message 'LSL.'.
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.L  D4,D1
+    
+    
     BEQ     VALID_MODE_0_JSR
     
     JSR     VALID_MODE_1
@@ -3356,29 +3410,6 @@ QUIT
 * Put variables and constants here
 
     END    START        ; last line of source
-
-
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
-
-
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
 
 
 *~Font name~Courier New~
