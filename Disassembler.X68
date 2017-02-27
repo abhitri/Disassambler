@@ -40,8 +40,8 @@ DO_NOTHING
     
 *    LSR.L   #1,D2
 
-    MOVEM.L  D0-D7,-(A7)
-    MOVEM.L  (A7)+,D0-D7
+    *MOVEM.L  D0-D7,-(A7)
+    *MOVEM.L  (A7)+,D0-D7
     LSL.W   #1,D2
     ASR.B   #1,D2
     ASL.W   #1,D2
@@ -285,76 +285,56 @@ DO_NOTHING
        DIVU.W   D1,D0
       
 INPUT        
-    LEA MESSAGE1,A1
-    MOVE.B  #14, D0  
-    TRAP    #15
-                
-    MOVEA.L $500,A1          ;This is where the string from the MESSAGE1 is stored
-    MOVE.B  #2,D0            ;This picks the trap task for input of a string
-    TRAP    #15
-    CLR.L   D4
-    MOVE.L  #28,D2           ;This is the number of bits that the first number needs to be shifted.
-              
-
-CONVERTSTRING 
-    MOVE.B    (A1)+,D0
-    CMP.B     #$00,D0       ;This is making sure that we have reached the end of the string
-    BEQ       STRINGEND
-    CMP.B     #0,D2         ;This compare checks if the number of bits we are shifting is less than 0. 
-    BLT       STRINGEND     ;if so then we have 8 valid characters
-    CMP.W     #$0061,D0     ;This checks if its greater than 61 it is a lower case character or an invalid character
-    BGE       LOWERCASE     ;Go to the LOWERCASE
-    CMP.W     #$0041,D0     ;This checks if its greater than 41, it is an upper case or an invalid character
-    BGE       UPPERCASE     ;Go to the UPPERCASE
-    CMP.W     #$0030,D0     ;If D0 is greater than 30 then character is either invalid or a number
-    BGE       NUMBER        ;Go to number
-    BRA       CONVERTSTRING ;Go to the beginning of the loop
-              
-LOWERCASE     
-    CMP.W     #$0066,D0     ;If the value is greater than $66, the character is invalid
-    BGT       CONVERTSTRING ;Go to the CONVERTSTRING
-    SUB       #87,D0        ;Converting from an ASCII value to its hex value
-    LSL.L     D2,D0         ;Shifts the value in D0 to the right index
-    ADD.L     D0,D3         ;Add D0 to the resulting hex value
-    CLR.L     D0            ;Clear D0
-    SUB.B     #4,D2         ;Subtract 4 from D2 to adjust number of bits to be shifted. 
-    BRA       CONVERTSTRING ;Go back to the beginning of loop. 
-              
-UPPERCASE     
-    CMP.B     #$0046,D0     ;If the value is greater than $46, the character is invalid. 
-    BGT       CONVERTSTRING ;Go to the CONVERTSTRING
-    SUB.B     #55,D0        ;Convert D0 from its ASCII to its hex value
-    LSL.L     D2,D0
-    ADD.L     D0,D3
-    CLR.L     D0
-    SUB.B     #4,D2
-    BRA       CONVERTSTRING
-                       
-NUMBER        
-    CMP.B     #$0039,D0
-    BGT       CONVERTSTRING
-    SUB.B     #48,D0
-    LSL.L     D2,D0
-    ADD.L     D0,D3
-    CLR.L     D0
-    SUB.B     #4,D2
-    BRA       CONVERTSTRING
-              
-STRINGEND     
-    MOVE.L    D3,D4
-
-    LEA MESSAGE2,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    MOVEA   D3,A2
-    BRA     RELOOP
+             LEA MESSAGE0,A1
+             MOVE.B  #14, D0
+             TRAP    #15
+GO_AGAIN
+             CLR.L   D3
+             CLR.L   D4
+             LEA MESSAGE1,A1
+             MOVE.B  #14, D0
+             TRAP    #15
+             MOVEA.L #$500,A1          ;This is where the string from the MESSAGE1 is stored
+             MOVE.B  #2,D0            ;This picks the trap task for input of a string
+             TRAP    #15
+             JSR    HEXINPUT
+             MOVE.L  D3,D4
+             CLR.L   D3
+             LEA MESSAGE2,A1
+             MOVE.B  #14,D0
+             TRAP    #15
+             MOVEA.L #$500,A1          ;This is where the string from the MESSAGE1 is stored
+             MOVE.B  #2,D0            ;This picks the trap task for input of a string
+             TRAP    #15
+             JSR    HEXINPUT
+CHECKADDRESS 
+             CMP.L       D4,D3
+             BLT         OUTPUT_ERRORMESSAGE1
+             MOVEA.L     D4,A2
+             MOVEA.L     D3,A3
+             BRA    RELOOP
+             
+ENDMESSAGE  
+            LEA     ENDOFPROGRAM,A1
+            MOVE.B  #14,D0
+            TRAP    #15
+            MOVE.B  #5,D0
+            TRAP    #15
+            LEA     NEWLINE,A1
+            MOVE.B  #14,D0
+            TRAP    #15
+            CMP.B   #'y',D1
+            BEQ     GO_AGAIN
+            CMP.B   #'n',D1
+            BEQ     QUIT
+            BRA     ENDMESSAGE
                 
 SKIP                                  
     MOVE.L  #$1000,A2       *Starting address for code to be disassembled.
     MOVE.L  #$3000,A3
 RELOOP
     CMP.L   A2,A3
-    BEQ     DIS_END
+    BEQ     ENDMESSAGE
     LEA     NEXT_LINE,A1 
     MOVE.B  #14,D0      
     TRAP    #15        
@@ -459,10 +439,12 @@ MOVE_PRINT_IMMED_ADDR_LONG
     CMP.W   #0,D6            *Compare to 0, if it is 0, print 0000
     BEQ     PRINT_0000_RTS
     
-    MOVE.L  D6,D1
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15
+    *MOVE.L  D6,D1
+    *MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
+    *MOVE.B  #16,D2        *Set the base to 16
+    *TRAP    #15
+    MOVE.L  D6,D2
+    JSR OUTPUT_HEXADECIMAL
 
     RTS
 
@@ -534,9 +516,7 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     
 
     MOVE.L  D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2
-    MOVE.B  #15,D0
+    MOVE.B  #3,D0
     TRAP    #15
 
     MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
@@ -825,9 +805,8 @@ Bcc_PRINT_DISPLACEMENT
     CMP     D7,D1
     BEQ     Bcc_PRINT_DISPLACEMENT_LONG
     
-    MOVE.B  #16,D2                   *Move 16 into D2 for base 16 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to print in hexadecimal  
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     JMP     RELOOP
     
 Bcc_PRINT_DISPLACEMENT_WORD
@@ -837,9 +816,8 @@ Bcc_PRINT_DISPLACEMENT_WORD
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
     CLR.L   D2
-    MOVE.B  #16,D2                          *Print immediate addressing number
-    MOVE.B  #15,D0
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     JMP     RELOOP
     
 Bcc_PRINT_DISPLACEMENT_LONG
@@ -849,9 +827,8 @@ Bcc_PRINT_DISPLACEMENT_LONG
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
     CLR.L   D2
-    MOVE.B  #16,D2                          *Print immediate addressing number
-    MOVE.B  #15,D0
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     JMP     RELOOP
     
 *End of Condition Section **********************************************
@@ -1028,9 +1005,7 @@ LSL_LSR_PRINT_Dx
     MOVE.B  #29,D6
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
 
     MOVE.B  #',',D1
@@ -1048,9 +1023,7 @@ LSL_LSR_PRINT_Dx
     LSL.L   D6,D1
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     RTS
@@ -1110,9 +1083,7 @@ LSL_LSR_PRINT_Dy
     MOVE.B  #29,D6
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
 
@@ -1131,9 +1102,7 @@ LSL_LSR_PRINT_Dy
     LSL.L   D6,D1
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.L  D4,D1
 
@@ -1321,10 +1290,8 @@ ADDA_IMMEDIATE_ADDR_TEST
     CLR.L   D2
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
-    CLR.L   D2
-    MOVE.B  #16,D2                          *Print immediate addressing number
-    MOVE.B  #15,D0
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     
     JMP     ADDA_PRINT_An   
     
@@ -1335,10 +1302,8 @@ ADDA_IMMEDIATE_WORD
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
     CLR.L   D2
-    MOVE.B  #16,D2                          *Print immediate addressing number
-    MOVE.B  #15,D0
-    TRAP    #15
-
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
 
 ADDA_PRINT_An
 
@@ -1357,9 +1322,7 @@ ADDA_PRINT_An
     MOVE.B  #29,D6
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     RTS                                     *Return from sub-routine
@@ -1520,10 +1483,9 @@ MOVEA_IMMEDIATE_ADDR_TEST
     CLR.L   D2
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
-    CLR.L   D2
-    MOVE.B  #16,D2                          *Print immediate addressing number
-    MOVE.B  #15,D0
-    TRAP    #15
+    
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     
     JMP     MOVEA_PRINT_An   
     
@@ -1533,10 +1495,8 @@ MOVEA_IMMEDIATE_WORD
     CLR.L   D2
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
-    CLR.L   D2
-    MOVE.B  #16,D2                          *Print immediate addressing number
-    MOVE.B  #15,D0
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
 
 
 MOVEA_PRINT_An
@@ -1556,9 +1516,7 @@ MOVEA_PRINT_An
     MOVE.B  #29,D6
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     RTS                                     *Return from sub-routine
@@ -1853,9 +1811,8 @@ LEA_PRINT_IMMED_ADDR_LONG
     BEQ     PRINT_0000_RTS
     
     MOVE.L  D6,D1
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
 
     RTS 
 LEA_PRINT
@@ -1890,9 +1847,7 @@ LEA_PRINT_An
     MOVE.B  #29,D6
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     JMP     RELOOP
     
@@ -1923,9 +1878,8 @@ MOVEQ_PRINT
     MOVE.B  #24,D6
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
@@ -1943,9 +1897,8 @@ MOVEQ_PRINT
     MOVE.B  #29,D6
     LSR.L   D6,D1
     
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     JMP     RELOOP
@@ -1961,7 +1914,6 @@ OPMODE_MULS_EA_DN_TEST_WORD
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.W  D4,D1
-
 
     BTST    #5,D1
     
@@ -2809,9 +2761,7 @@ PRINT_VALID_BTST_STATIC
     
     MOVE.W  D1,D4                  *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.W  D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2
-    MOVE.B  #15,D0
+    MOVE.B  #3,D0
     TRAP    #15
     MOVE.W  D4,D1
     
@@ -2843,9 +2793,7 @@ VALID_MODE_1     *Options here are
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    
     LSR.L   D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     MOVE.B  #')',D1
@@ -2868,9 +2816,8 @@ VALID_MODE_11
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
 
     MOVE.W  D6,D1
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     
     MOVE.W  D4,D1                    *Copy original values back into D1
     RTS
@@ -2893,9 +2840,8 @@ VALID_MODE_111_POUND
     
     
     
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     
     MOVE.W  D4,D1                    *Copy original values back into D1
     RTS
@@ -2906,9 +2852,8 @@ VALID_MODE_111_LONG
     MOVE.L  (A2)+,D6
     
     MOVE.L  D6,D1
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     CLR.L   D1
     
     RTS
@@ -2938,9 +2883,7 @@ VALID_MODE_00
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    
     LSR.L   D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
@@ -2954,9 +2897,7 @@ VALID_MODE_01
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    *Shift bits to isolate register number
     LSR.L   D6,D1                    *Shift bits back to position so we can get the number
-    CLR.L   D2                       *Make sure D2 is clear
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     
@@ -2978,9 +2919,7 @@ VALID_MODE_001
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    
     LSR.L   D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
@@ -3011,9 +2950,7 @@ VALID_MODE_SOURCE_DEST_1     *Options here are
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    
     LSR.L   D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     MOVE.B  #')',D1
@@ -3036,9 +2973,8 @@ VALID_MODE_SOURCE_DEST_11
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
 
     MOVE.W  D6,D1
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     
     MOVE.W  D4,D1                    *Copy original values back into D1
     RTS
@@ -3052,18 +2988,16 @@ VALID_MODE_SOURCE_DEST_111_POUND
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
 
     MOVE.W  D6,D1
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15           *Print out the Addr1 value in hexadecimal format
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     
     MOVE.W  D4,D1                    *Copy original values back into D1
     RTS
 VALID_MODE_SOURCE_DEST_111_LONG
     MOVE.L  (A2)+,D6
     MOVE.L  D6,D1
-    MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
-    MOVE.B  #16,D2        *Set the base to 16
-    TRAP    #15
+    MOVE.L  D1,D2                    
+    JSR     OUTPUT_HEXADECIMAL
     CLR.L   D1
     
     RTS
@@ -3085,9 +3019,7 @@ VALID_MODE_SOURCE_DEST_00
     
     MOVE.B  #29,D6                   *Set the bit shift to 25 now to shift register number all the way to the right
     LSR.L   D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
@@ -3104,9 +3036,7 @@ VALID_MODE_SOURCE_DEST_01
     
     MOVE.B  #29,D6                   *Set the bit shift to 25 now to shift register number all the way to the right
     LSR.L   D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
     
@@ -3128,9 +3058,7 @@ VALID_MODE_SOURCE_DEST_001
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    
     LSR.L   D6,D1
-    CLR.L   D2
-    MOVE.B  #10,D2                   *Move 10 into D2 for base 10 decimal system used to print
-    MOVE.B  #15,D0                   *Move trap task  #15 to convert to decimal and print  
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
@@ -3148,7 +3076,210 @@ PRINT_INVALID_OPCODE
     TRAP    #15
     JMP     RELOOP
     
-DIS_END
+HEXINPUT             
+             MOVE.L  #28,D2           ;This is the number of bits that the first number needs to be shifted.                       
+
+CONVERTSTRING MOVE.B    (A1)+,D0
+              CMP.B     #$00,D0       ;This is making sure that we have reached the end of the string
+              BEQ       STRINGEND
+              CMP.B     #0,D2         ;This compare checks if the number of bits we are shifting is less than 0. 
+              BLT       STRINGEND     ;if so then we have 8 valid characters
+              CMP.W     #$0061,D0     ;This checks if its greater than 61 it is a lower case character or an invalid character
+              BGE       LOWERCASE     ;Go to the LOWERCASE
+              CMP.W     #$0041,D0     ;This checks if its greater than 41, it is an upper case or an invalid character
+              BGE       UPPERCASE     ;Go to the UPPERCASE
+              CMP.W     #$0030,D0     ;If D0 is greater than 30 then character is either invalid or a number
+              BGE       NUMBER        ;Go to number
+              BRA       CONVERTSTRING ;Go to the beginning of the loop
+              
+LOWERCASE     CMP.W     #$0066,D0     ;If the value is greater than $66, the character is invalid
+              BGT       CONVERTSTRING ;Go to the CONVERTSTRING
+              SUB       #87,D0        ;Converting from an ASCII value to its hex value
+              LSL.L     D2,D0         ;Shifts the value in D0 to the right index
+              ADD.L     D0,D3         ;Add D0 to the resulting hex value
+              CLR.L     D0            ;Clear D0
+              SUB.B     #4,D2         ;Subtract 4 from D2 to adjust number of bits to be shifted. 
+              BRA       CONVERTSTRING ;Go back to the beginning of loop. 
+              
+UPPERCASE     CMP.B     #$0046,D0     ;If the value is greater than $46, the character is invalid. 
+              BGT       CONVERTSTRING ;Go to the CONVERTSTRING
+              SUB.B     #55,D0        ;Convert D0 from its ASCII to its hex value
+              LSL.L     D2,D0
+              ADD.L     D0,D3
+              CLR.L     D0
+              SUB.B     #4,D2
+              BRA       CONVERTSTRING
+             
+NUMBER        CMP.B     #$0039,D0
+              BGT       CONVERTSTRING
+              SUB.B     #48,D0
+              LSL.L     D2,D0
+              ADD.L     D0,D3
+              CLR.L     D0
+              SUB.B     #4,D2
+              BRA       CONVERTSTRING
+              
+STRINGEND     RTS 
+
+REMOVE_ZEROS_START                      ;Used by Output Hexadecimal. Assumes value isn't zero, because that subroutine checks if it is.
+             MOVE.L     D5,-(SP)        ;Restoring the values stored in the Stack
+REMOVE_ZEROS                            ;Removing the leading zeros
+             MOVE.L     D3,D5
+             LSR.L      D4,D5
+             AND.B      #$0F,D5
+             CMP.B      #0,D5
+             BEQ        REMOVE_ZERO
+             MOVE.L     (SP)+,D5
+             RTS
+             
+REMOVE_ZERO
+             SUB.B      #4,D4          
+             BRA        REMOVE_ZEROS    
+OUTPUT_HEXADECIMAL  *Subroutine for outputting a hexadecimal number.
+            MOVEM.L D3-D4,-(SP)
+            CMP.L   #0,D2
+            BEQ     OUTPUT0
+            MOVE.L  D2,D3
+            MOVE.L  #28,D4
+            JSR     REMOVE_ZEROS_START
+            LSR.L   D4,D3
+            MULU    #6,D3
+            LEA     OUTPUT_CHAR,A0
+            JSR     0(A0,D3)
+
+OUTPUT_LOOP  
+            SUB.B   #4,D4   ;Changes the amount we are shifting by, in this case by 4
+            CMP.B   #0,D4
+            BLT     RETURN_CASE
+            MOVE.L  D2,D3
+            LSR.L   D4,D3
+            AND.L   #$0F,D3 ;We are getting rid of everything that isn't the last 4 bits.
+            MULU    #6,D3
+            JSR     0(A0,D3)
+            BRA     OUTPUT_LOOP
+RETURN_CASE 
+            MOVEM.L (SP)+,D3-D4
+            RTS            
+            
+OUTPUT_CHAR JMP     OUTPUT0
+            JMP     OUTPUT1
+            JMP     OUTPUT2
+            JMP     OUTPUT3
+            JMP     OUTPUT4
+            JMP     OUTPUT5
+            JMP     OUTPUT6
+            JMP     OUTPUT7
+            JMP     OUTPUT8
+            JMP     OUTPUT9
+            JMP     OUTPUTA
+            JMP     OUTPUTB
+            JMP     OUTPUTC
+            JMP     OUTPUTD
+            JMP     OUTPUTE
+            JMP     OUTPUTF
+                     
+            
+OUTPUT0     
+            MOVE.B  #'0',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+            
+OUTPUT1    
+            MOVE.B  #'1',D1    ;Moves the character into D1   
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT2
+            MOVE.B  #'2',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT3
+            MOVE.B  #'3',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS          
+
+OUTPUT4
+            MOVE.B  #'4',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT5
+            MOVE.B  #'5',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT6
+            MOVE.B  #'6',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT7
+            MOVE.B  #'7',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT8
+            MOVE.B  #'8',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT9 
+           MOVE.B  #'9',D1    ;Moves the character into D1
+           MOVE.B  #6,  D0    ;This trap task prints out character in D1
+           TRAP    #15        ;This outputs to the output window
+           RTS
+
+OUTPUTA
+           MOVE.B  #'A',D1    ;Moves the character into D1
+           MOVE.B  #6,  D0    ;This trap task prints out character in D1
+           TRAP    #15        ;This outputs to the output window
+           RTS
+
+OUTPUTB
+           MOVE.B  #'B',D1    ;Moves the character into D1
+           MOVE.B  #6,  D0    ;This trap task prints out character in D1
+           TRAP    #15        ;This outputs to the output window
+           RTS
+
+OUTPUTC
+           MOVE.B  #'C',D1    ;Moves the character into D1
+           MOVE.B  #6,  D0    ;This trap task prints out character in D1
+           TRAP    #15        ;This outputs to the output window
+           RTS
+
+OUTPUTD
+            MOVE.B  #'D',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUTE
+            MOVE.B  #'E',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUTF
+            MOVE.B  #'F',D1    ;Moves the character into D1
+            MOVE.B  #6,  D0    ;This trap task prints out character in D1
+            TRAP    #15        ;This outputs to the output window
+            RTS
+
+OUTPUT_ERRORMESSAGE1
+              LEA    ERRORMESSAGE1,A1
+              MOVE.B  #14, D0
+              TRAP    #15   
+              BRA    GO_AGAIN
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
 LF      EQU     $0A             ASCII code for Line Feed
@@ -3211,10 +3342,14 @@ CLOSE_PAREN     DC.B    ')',0
 A_REGISTER_MESS DC.B    'A',0
 D_REGISTER_MESS DC.B    'D',0
 INDIRECT_ADDR_MESS DC.B '(A',0
-MESSAGE1 DC.B 'Please enter a starting address for your program',0
-MESSAGE2 DC.B 'Please enter an ending address for your program',0
+MESSAGE0         DC.B 'Welcome to Disassembler.',CR,LF,'Created by: Abhi Trivedi, Conor Van Achte, and Samuel Meyerding.',CR,LF,0       
+MESSAGE1         DC.B 'Please enter a starting address for your program: ',0
+MESSAGE2         DC.B 'Please enter an ending address for your program: ',0
+ERRORMESSAGE1    DC.B 'Your ending address is less than the starting address',CR,LF,0
+ENDOFPROGRAM     DC.B 'Do you want to disassemble some more memory? (y/n)',CR,LF,0
+NEWLINE          DC.B CR,LF,0
 
-
+QUIT
 
 * Put variables and constants here
 
@@ -3242,6 +3377,7 @@ MESSAGE2 DC.B 'Please enter an ending address for your program',0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
