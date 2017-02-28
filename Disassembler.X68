@@ -47,7 +47,13 @@ START:                  ; first instruction of program
 *    LSR.L   #1,D2
 
     MOVEM.L  D0-D7,-(A7)
+    MOVEM.L  D0-D7,(A7)
     MOVEM.L  (A7)+,D0-D7
+    *MOVEM.L  D0-D7,(A7)+
+    MOVEM.L  (A7),D0-D6
+    MOVEM.L  D0-D6,(A7)
+    MOVEM.L  (A7)+,D0-D7
+    *MOVEM.L  D0-D7,(A7)+
     LSL.W   #1,D2
     ASR.B   #1,D2
     ASL.W   #1,D2
@@ -1696,7 +1702,10 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
     
     JSR     TEST_LONG_WORD
+    JSR     CHECK_ADDR_MODE
     
+    BTST    #0,D7
+    BNE     MOVEM_PRINT_LIST_REVERSE
     JSR     MOVEM_PRINT_LIST
     JSR     JSR_COMMA
     BTST    #5,D1
@@ -1709,7 +1718,10 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     
     JMP     RELOOP
 
+MOVEM_PRINT_LIST_REVERSE
+    
 
+    JMP     RELOOP
    
 TEST_LONG_WORD
     MOVE.L  D1,D4
@@ -1759,6 +1771,7 @@ MOVEM_MEM_REG               *Direction of transfer is memory to register.
     TRAP    #15
     MOVE.L  D4,D1
     
+    
     BTST    #5,D1
     BEQ     VALID_MODE_0_MOVEM_JSR
     
@@ -1766,10 +1779,28 @@ MOVEM_MEM_REG               *Direction of transfer is memory to register.
     
     JSR     JSR_COMMA
     
+    CLR.L   D6
     JSR     MOVEM_PRINT_LIST
     
     JMP     RELOOP
-   
+  
+CHECK_ADDR_MODE
+    BTST    #5,D1
+    BNE     CHECK_ADDR_MODE_1
+    
+    RTS
+    
+CHECK_ADDR_MODE_1
+    BTST    #3,D1
+    BEQ     CHECK_ADDR_MODE_100
+
+    RTS
+    
+CHECK_ADDR_MODE_100
+    CLR.L   D7
+    MOVE.L  #1,D7
+    RTS
+
 JSR_COMMA  
 
     MOVE.L  D1,D4
@@ -1780,7 +1811,7 @@ JSR_COMMA
     RTS
 VALID_MODE_0_MOVEM_JSR 
     JSR     VALID_MODE_0
-    
+    CLR.L   D6
     JSR     MOVEM_PRINT_LIST
     JMP     RELOOP
     
@@ -1800,20 +1831,22 @@ MOVEM_PRINT_LONG
     TRAP    #15
     MOVE.L  D4,D1
     
-    
-*    BTST    #5,D1
-*    BEQ     VALID_MODE_0_MOVEM_JSR
-*    
-*    JSR     VALID_MODE_1
-    
     RTS
    
 MOVEM_PRINT_LIST
+    CLR.L   D6
+    CLR.L   D5
     MOVE.W  (A2)+,D6         *Get the remaining word
-    MOVE.L  #15,
-    
+    MOVE.L  #15,D6
+    BEQ     MOVEM_PRINT_LOOP
     
     RTS
+    
+MOVEM_PRINT_LOOP
+    
+
+    RTS
+    
 JSR_SECT    
     LEA     JSR_MESS,A1     *Outputs the message 'JSR'.
     MOVE.B  #14,D0      
@@ -3412,6 +3445,10 @@ QUIT
     END    START        ; last line of source
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
