@@ -45,8 +45,10 @@ START:                  ; first instruction of program
 *    ROR.W    D1,D2
     
 *    LSR.L   #1,D2
-
-    MOVEM.L  D0-D7,-(A7)
+    MOVEM.W  (A7),D0-D7
+    MOVEM.L  D1-D7,-(A7)
+    MOVEM.L  A1-A7,-(A7)
+     
     MOVEM.L  D0-D7,(A7)
     MOVEM.L  (A7)+,D0-D7
     *MOVEM.L  D0-D7,(A7)+
@@ -1719,10 +1721,193 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     JMP     RELOOP
 
 MOVEM_PRINT_LIST_REVERSE
+    CLR.L   D6
+    CLR.L   D5
+    CLR.L   D7
+    MOVE.L  #15,D5
+    MOVE.L  #0,D7
+    MOVE.W  (A2)+,D6         *Get the remaining word
     
-
+    
+    JSR     MOVEM_PRINT_LIST_REVERSE_LOOP
+    JSR     JSR_COMMA
+        
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_JSR 
+    
+    JSR     VALID_MODE_1
     JMP     RELOOP
-   
+    
+MOVEM_PRINT_LIST_REVERSE_LOOP
+    
+    BTST    D5,D6
+    BNE     MOVEM_PRINT_REVERSE_END
+    SUB.B   #1,D5
+    JMP     MOVEM_PRINT_LIST_REVERSE_LOOP
+
+
+    RTS
+
+MOVEM_PRINT_LIST
+    CLR.L   D7
+    CLR.L   D6
+    CLR.L   D5
+    MOVE.W  (A2)+,D6         *Get the remaining word
+    MOVE.L  #15,D6
+    JSR     MOVEM_PRINT_LOOP
+    
+    
+    RTS
+    
+MOVEM_PRINT_LOOP
+    CLR.L   D6
+    CLR.L   D5
+    CLR.L   D7
+    MOVE.L  #15,D5
+    MOVE.L  #0,D7
+    MOVE.W  (A2)+,D6         *Get the remaining word
+    
+    
+    JSR     MOVEM_PRINT_LIST_REVERSE_LOOP
+    JSR     JSR_COMMA
+        
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_JSR 
+    
+    JSR     VALID_MODE_1
+    JMP     RELOOP
+
+    RTS
+    
+MOVEM_PRINT_REVERSE_END
+    BTST    D7,D6
+    BNE     MOVEM_PRINT_REVERSE_FINAL
+    ADD.B   #1,D7
+    JMP     MOVEM_PRINT_REVERSE_END
+    
+MOVEM_PRINT_REVERSE_FINAL
+    CLR.L   D0
+    MOVE.L  D7,D0
+    CMP     #7,D7
+    BGT     MOVEM_PRINT_REVERSE_Dn
+    JMP     MOVEM_PRINT_REVERSE_An
+
+*********
+
+MOVEM_PRINT_An
+    MOVE.L  D1,D4
+    CLR.L   D7
+    MOVE.L  D0,D7
+    CLR.L   D0
+    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.L  #8,D1
+    SUB.L   D5,D1
+
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
+    CLR.L   D1
+    MOVE.L  #8,D1
+    SUB.L   D7,D1
+    TRAP    #15
+    MOVE.L  D4,D1
+    RTS
+MOVEM_PRINT_Dn
+    MOVE.L  D1,D4
+    CLR.L   D7
+    MOVE.L  D0,D7
+    CLR.L   D0
+    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+
+
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
+    CLR.L   D1
+    TRAP    #15
+    MOVE.L  D4,D1
+    RTS
+
+
+
+********
+MOVEM_PRINT_REVERSE_An
+    MOVE.L  D1,D4
+    CLR.L   D7
+    MOVE.L  D0,D7
+    CLR.L   D0
+    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.L  #7,D1
+    SUB.L   D5,D1
+
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
+    CLR.L   D1
+    MOVE.L  #7,D1
+    SUB.L   D7,D1
+    TRAP    #15
+    MOVE.L  D4,D1
+    RTS
+MOVEM_PRINT_REVERSE_Dn
+    MOVE.L  D1,D4
+    CLR.L   D7
+    MOVE.L  D0,D7
+    CLR.L   D0
+    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.L  #15,D1
+    SUB.L   D5,D1
+
+    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
+    TRAP    #15
+    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
+    CLR.L   D1
+    MOVE.L  #15,D1
+    SUB.L   D7,D1
+    TRAP    #15
+    MOVE.L  D4,D1
+    RTS
+
 TEST_LONG_WORD
     MOVE.L  D1,D4
     BTST    #6,D1
@@ -1833,19 +2018,7 @@ MOVEM_PRINT_LONG
     
     RTS
    
-MOVEM_PRINT_LIST
-    CLR.L   D6
-    CLR.L   D5
-    MOVE.W  (A2)+,D6         *Get the remaining word
-    MOVE.L  #15,D6
-    BEQ     MOVEM_PRINT_LOOP
-    
-    RTS
-    
-MOVEM_PRINT_LOOP
-    
 
-    RTS
     
 JSR_SECT    
     LEA     JSR_MESS,A1     *Outputs the message 'JSR'.
@@ -3445,6 +3618,10 @@ QUIT
     END    START        ; last line of source
 
 
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
