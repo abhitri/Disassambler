@@ -14,24 +14,40 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
     ORG     $1000
 START:                  ; first instruction of program
 
-
-    MOVEM.W  (A7),D1-D7
-    MOVEM.L  D1-D7,-(A7)
-    MOVEM.L  A1-A7,-(A7)
+    BRA         SKIP
+    MOVEM.W     (A7),D1-D7
+    MOVEM.L     (A6),D2-D7
+    MOVEM.W     (A7),A1-A7
+    MOVEM.L     (A6),A2-A7
+    MOVEM.W     (A5)+,D3-D7
+    MOVEM.L     (A4)+,D7-D7
+    MOVEM.W     (A5)+,A3-A7
+    MOVEM.L     (A4)+,A7-A7
+    MOVEM.W     $20000,D1-D7
+    MOVEM.L     $20000,D2-D7
+    MOVEM.W     $100,A1-A7
+    MOVEM.L     $100,A2-A7
+    
+    MOVEM.L     D1-D7,-(A3)
+    MOVEM.L     A1-A7,-(A2)
+    MOVEM.W     D3-D4,-(A1)
+    MOVEM.W     A1-A7,-(A0)
+    MOVEM.L     D1-D7,(A3)
+    MOVEM.L     A1-A7,(A2)
+    MOVEM.W     D3-D4,(A1)
+    MOVEM.W     A1-A7,(A0)
+    MOVEM.L     D1-D7,$20000
+    MOVEM.L     A1-A7,$100
+    MOVEM.W     D3-D4,$20000
+    MOVEM.W     A1-A7,$100
      
-    MOVEM.L  D0-D7,(A7)
-    MOVEM.W  D0-D7,(A7)
-    MOVEM.L  (A7)+,D0-D7
-    *MOVEM.L  D0-D7,(A7)+
-    MOVEM.L  (A7),D0-D6
-    MOVEM.L  D0-D6,(A7)
-    MOVEM.L  (A7)+,D0-D7
-    *MOVEM.L  D0-D7,(A7)+
-    LSL.W   #1,D2
-    ASR.B   #1,D2
-    ASL.W   #1,D2
-    ROL.W    #1,D2
-    ROR.W    #1,D2
+
+
+    LSL.W       #1,D2
+    ASR.B       #1,D2
+    ASL.W       #1,D2
+    ROL.W       #1,D2
+    ROR.W       #1,D2
 
 
         
@@ -257,7 +273,6 @@ MOVE_PRINT_IMMED_ADDR_LONG
     BTST    #2,D1
     BEQ     RTS
 
-    MOVE.W  (A2)+,D6         *Get the remaining word
     CMP.W   #0,D6            *Compare to 0, if it is 0, print 0000
     BEQ     PRINT_0000_RTS
     
@@ -1461,11 +1476,8 @@ ADDQ_PRINT_DATA
     MOVE.L  #3,D0
     CMP.W   #0,D1
     BEQ     ADDQ_PRINT_8
-    
     TRAP    #15
     
-    
-
     RTS
 ADDQ_PRINT_8
     MOVE.B  #8,D1
@@ -1476,7 +1488,6 @@ ADDQ_PRINT_ADDR_MODE
     BNE     ADDQ_PRINT_ADDR_MODE_LONG
     BTST    #6,D1
     BNE     ADDQ_PRINT_ADDR_MODE_WORD
-    
 
     MOVE.B  #'B',D1
     MOVE.B  #6,D0
@@ -1513,41 +1524,39 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     AND.W   #%1111101110000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%0100100010000000,D2   *Comparing with valid value.
     BNE     PRINT_INVALID_OPCODE    *If it's not the valid value, then print error message.
+    CLR.L   D6
+    MOVE.W  (A2)+,D6                *Get the remaining word for this OPCode.
     
     JSR     TEST_LONG_WORD
     JSR     CHECK_ADDR_MODE
     
     BTST    #0,D7
-    BNE     MOVEM_PRINT_LIST_REVERSE
-    JSR     MOVEM_PRINT_LIST
+    BNE     MOVEM_PRINT_LIST_REVERSE_REG_MEM
+    BEQ     MOVEM_PRINT_LIST_REG_MEM
+MOVEM_REG_PRINT_SECOND
     JSR     JSR_COMMA
     BTST    #5,D1
-    BEQ     VALID_MODE_0_MOVEM_REG_MEM_JSR 
-    
-    JSR     VALID_MODE_1
-
-    
-
-    
+    BEQ     VALID_MODE_0_MOVEM_REG_MEM_JSR    
+    JSR     VALID_MODE_1    
     JMP     RELOOP
 
+MOVEM_PRINT_LIST_REVERSE_REG_MEM
+    JSR     MOVEM_PRINT_LIST_REVERSE
+    JMP     MOVEM_REG_PRINT_SECOND
+
+MOVEM_PRINT_LIST_REG_MEM
+    JSR     MOVEM_PRINT_LIST
+    JMP     MOVEM_REG_PRINT_SECOND
+    
 MOVEM_PRINT_LIST_REVERSE
-    CLR.L   D6
     CLR.L   D5
     CLR.L   D7
     MOVE.L  #15,D5
     MOVE.L  #0,D7
-    MOVE.W  (A2)+,D6         *Get the remaining word
-    
-    
-    JSR     MOVEM_PRINT_LIST_REVERSE_LOOP
-    JSR     JSR_COMMA
+*    MOVE.W  (A2)+,D6         *Get the remaining word
         
-    BTST    #5,D1
-    BEQ     VALID_MODE_0_JSR 
-    
-    JSR     VALID_MODE_1
-    JMP     RELOOP
+    JSR     MOVEM_PRINT_LIST_REVERSE_LOOP
+    RTS
     
 MOVEM_PRINT_LIST_REVERSE_LOOP
     
@@ -1555,29 +1564,18 @@ MOVEM_PRINT_LIST_REVERSE_LOOP
     BNE     MOVEM_PRINT_REVERSE_END
     SUB.B   #1,D5
     JMP     MOVEM_PRINT_LIST_REVERSE_LOOP
-
-
     RTS
     
-MOVEM_PRINT_LIST_LOOP
-    
+MOVEM_PRINT_LIST_LOOP    
     BTST    D5,D6
     BNE     MOVEM_PRINT_END
     SUB.B   #1,D5
     JMP     MOVEM_PRINT_LIST_LOOP
-
-
     RTS
 
 MOVEM_PRINT_LIST
-    CLR.L   D7
-    CLR.L   D6
-    CLR.L   D5
-    MOVE.W  (A2)+,D6         *Get the remaining word
     *MOVE.L  #15,D6
     JSR     MOVEM_PRINT_LOOP
-    
-    
     RTS
     
 MOVEM_PRINT_LOOP
@@ -1586,18 +1584,14 @@ MOVEM_PRINT_LOOP
     CLR.L   D7
     MOVE.L  #15,D5
     MOVE.L  #0,D7
-    *MOVE.W  (A2)+,D6         *Get the remaining word
-    
-    JSR     JSR_COMMA
-    JSR     MOVEM_PRINT_LIST_LOOP
-    
-        
+    *MOVE.W  (A2)+,D6         *Get the remaining word    
+    *JSR     JSR_COMMA
+    JSR     MOVEM_PRINT_LIST_LOOP            
 *    BTST    #5,D1
 *    BEQ     VALID_MODE_0_JSR 
 *    
 *    JSR     VALID_MODE_1
-    JMP     RELOOP
-
+*    JMP     RELOOP
     RTS
     
 MOVEM_PRINT_REVERSE_END
@@ -1626,19 +1620,18 @@ MOVEM_PRINT_FINAL
     CMP     #7,D7
     BGT     MOVEM_PRINT_An
     JMP     MOVEM_PRINT_Dn
+    
 *********
 
 MOVEM_PRINT_An
     MOVE.L  D1,D4
-    CLR.L   D7
     MOVE.L  D0,D7
-    CLR.L   D0
     MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
 
-    MOVE.L  #8,D1
-    SUB.L   D5,D1
+    SUB.L   #8,D5
+    MOVE.L  D5,D1
 
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
@@ -1651,8 +1644,8 @@ MOVEM_PRINT_An
     TRAP    #15
     MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
     CLR.L   D1
-    MOVE.L  #8,D1
-    SUB.L   D7,D1
+    SUB.L   #8,D7
+    MOVE.L  D7,D1
     TRAP    #15
     MOVE.L  D4,D1
     RTS
@@ -1664,35 +1657,25 @@ MOVEM_PRINT_Dn
     MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
-
-    MOVE.L  D7,D1
     
-    
-    
+    MOVE.L  D7,D1    
     MOVE.L  D1,D2                    
-    JSR     OUTPUT_HEXADECIMAL
-    
+    JSR     OUTPUT_HEXADECIMAL    
     MOVE.W  D4,D1
     MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
-
     MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
     CLR.L   D1
-    MOVE.L  D5,D1
-    
-    
-    
+    MOVE.L  D5,D1   
     MOVE.L  D1,D2                    
     JSR     OUTPUT_HEXADECIMAL
     
     MOVE.L  D4,D1
     RTS
-
-
 
 ********
 MOVEM_PRINT_REVERSE_An
@@ -1756,7 +1739,7 @@ TEST_LONG_WORD
     MOVE.L  D1,D4
     BTST    #6,D1
     BNE     MOVEM_PRINT_LONG_JSR
-    
+    JSR     MOVEM_PRINT_WORD
     
     RTS
 MOVEM_PRINT_LONG_JSR
@@ -1765,17 +1748,7 @@ MOVEM_PRINT_LONG_JSR
     
 MOVEM_PRINT_LONG_JSR_RELOOP
     JSR     MOVEM_PRINT_LONG
-    
-
-    BTST    #5,D1
-    BEQ     VALID_MODE_0_MOVEM_REG_MEM_JSR 
-    
-    JSR     VALID_MODE_1
-    
-    JSR     JSR_COMMA
-    JSR     MOVEM_PRINT_LIST
-    
-    JMP     RELOOP
+    JMP     MOVEM_MEM_PRINTED_SIZE
     
 MOVEM_MEM_REG               *Direction of transfer is memory to register.
     LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
@@ -1785,30 +1758,17 @@ MOVEM_MEM_REG               *Direction of transfer is memory to register.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
-    
-    
-    
-    BTST    #6,D1
-    BNE     MOVEM_PRINT_LONG_JSR_RELOOP
-    
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
-    
-    
-    BTST    #5,D1
-    BEQ     VALID_MODE_0_MOVEM_JSR
-    
-    JSR     VALID_MODE_1
-    
-    JSR     JSR_COMMA
-    
     CLR.L   D6
+    MOVE.W  (A2)+,D6                *Get the remaining word for this OPCode.
+    BTST    #6,D1
+    BNE     MOVEM_PRINT_LONG_JSR_RELOOP    
+    JSR     MOVEM_PRINT_WORD   
+MOVEM_MEM_PRINTED_SIZE    
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_MOVEM_MEM_REG_JSR
+    JSR     VALID_MODE_1
+MOVEM_MEM_PRINT_SECOND
+    JSR     JSR_COMMA
     JSR     MOVEM_PRINT_LIST
     
     JMP     RELOOP
@@ -1822,7 +1782,6 @@ CHECK_ADDR_MODE
 CHECK_ADDR_MODE_1
     BTST    #3,D1
     BEQ     CHECK_ADDR_MODE_100
-
     RTS
     
 CHECK_ADDR_MODE_100
@@ -1831,39 +1790,43 @@ CHECK_ADDR_MODE_100
     RTS
 
 JSR_COMMA  
-
     MOVE.L  D1,D4
     MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.L  D4,D1
     RTS
-VALID_MODE_0_MOVEM_JSR 
+    
+VALID_MODE_0_MOVEM_MEM_REG_JSR 
     JSR     VALID_MODE_0
-    CLR.L   D6
-    JSR     MOVEM_PRINT_LIST
-    JMP     RELOOP
+    JMP     MOVEM_MEM_PRINT_SECOND
     
 VALID_MODE_0_MOVEM_REG_MEM_JSR 
     JSR     VALID_MODE_0
-    
-    JSR     JSR_COMMA
     JMP     RELOOP
-MOVEM_PRINT_LONG
-    
-    MOVE.L  D1,D4
+
+MOVEM_PRINT_LONG    
+    MOVE.L  D1,-(SP)
     MOVE.B  #'L',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
     MOVE.B  #6,D0
     TRAP    #15
-    MOVE.L  D4,D1
-    
+    MOVE.L  (SP)+,D1
+    RTS
+ 
+MOVEM_PRINT_WORD    
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'W',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
     RTS
    
-
-    
 JSR_SECT    
     LEA     JSR_MESS,A1     *Outputs the message 'JSR'.
     MOVE.B  #14,D0      
@@ -2879,7 +2842,9 @@ PRINT_VALID_BTST_STATIC
     JSR     VALID_MODE_1 
     JMP     RELOOP
 
-VALID_MODE_1     *Options here are                 
+VALID_MODE_1     *Options here are  
+    MOVEM.L D0-D7,-(SP)  
+    MOVE.W  D1,D4             
     BTST    #4,D1
     BNE     VALID_MODE_11
     
@@ -2906,7 +2871,7 @@ VALID_MODE_1     *Options here are
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     
-    
+    MOVEM.L (SP)+,D0-D7
     RTS
 VALID_MODE_11    
     BTST    #2,D1
@@ -2925,6 +2890,7 @@ VALID_MODE_11
     JSR     OUTPUT_HEXADECIMAL
     
     MOVE.W  D4,D1                    *Copy original values back into D1
+    MOVEM.L (SP)+,D0-D7
     RTS
     
 VALID_MODE_111_POUND
@@ -2949,6 +2915,7 @@ VALID_MODE_111_POUND
     JSR     OUTPUT_HEXADECIMAL
     
     MOVE.W  D4,D1                    *Copy original values back into D1
+    MOVEM.L (SP)+,D0-D7
     RTS
     
 RTS
@@ -2960,18 +2927,22 @@ VALID_MODE_111_LONG
     MOVE.L  D1,D2                    
     JSR     OUTPUT_HEXADECIMAL
     CLR.L   D1
-    
+    MOVEM.L (SP)+,D0-D7
     RTS
     
 PRINT_0000_RTS
+    MOVE.L  D1,-(SP)
     MOVE.B  #'0',D1
     MOVE.B  #6,D0
     TRAP    #15
     TRAP    #15
     TRAP    #15
     TRAP    #15
+    MOVE.L  (SP)+,D1
     RTS
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
+    MOVEM.L D0-D7,-(SP)
+    MOVE.W  D1,D4
     BTST    #4,D1
     BNE     VALID_MODE_01  
     JMP     VALID_MODE_00
@@ -2979,7 +2950,6 @@ VALID_MODE_0                         *Options are Dn, (An), or (An)+
 VALID_MODE_00
     BTST    #3,D1
     BNE     VALID_MODE_001
-    
     MOVE.B  #'D',D1
     MOVE.B  #6,D0
     TRAP    #15                   
@@ -2991,7 +2961,7 @@ VALID_MODE_00
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
-    
+    MOVEM.L (SP)+,D0-D7
     RTS
 VALID_MODE_01    
     LEA     INDIRECT_ADDR_MESS,A1
@@ -3005,14 +2975,13 @@ VALID_MODE_01
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
-    
-    
     MOVE.B   #')',D1                 *Setting value in D1 to literal value for a space character.
     MOVE.B   #6,D0                   *Picking TRAP task #6. 
     TRAP     #15                     *Output individual character.
     MOVE.W  D4,D1                    *Copy original values back into D1
     BTST    #3,D1
     BNE     VALID_MODE_011 
+    MOVEM.L (SP)+,D0-D7
     RTS
 
 VALID_MODE_001
@@ -3027,13 +2996,14 @@ VALID_MODE_001
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
-    
+    MOVEM.L (SP)+,D0-D7
     RTS
 
 VALID_MODE_011
     LEA     PLUS,A1
     MOVE.B  #14,D0
     TRAP    #15
+    MOVEM.L (SP)+,D0-D7
     RTS
 
 VALID_MODE_SOURCE_DEST_1     *Options here are                 
@@ -3475,6 +3445,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 *~Font name~Courier New~
