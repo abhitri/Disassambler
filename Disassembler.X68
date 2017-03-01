@@ -171,10 +171,12 @@ SKIP
     MOVE.L  #$3000,A3
 RELOOP
     CMP.L   A2,A3
-    BEQ     ENDMESSAGE
+    BLT     ENDMESSAGE
     LEA     NEXT_LINE,A1 
     MOVE.B  #14,D0      
-    TRAP    #15        
+    TRAP    #15
+    JSR     PRINT_ADDRESS   *Prints the address at this instruction.
+    JSR     PRINT_SPACE     *Separates the address from the next output.    
     MOVE.W  (A2)+,D1        *Moves the value at address A2 into D1.
     CMP.W   #NOP_CODE,D1    *NOP has a static value, so a direct comparison will find if the OPCode is NOP
     BEQ     NOP_SECT        *Output 'NOP' if the OPCode == #NOP_CODE
@@ -1892,6 +1894,11 @@ TRAP_SECT
     LEA     TRAP_MESS,A1    *Output the message 'TRAP'.
     MOVE.B  #14,D0
     TRAP    #15
+    JSR     PRINT_SPACE
+    JSR     PRINT_POUND
+    AND.L   #$F,D1
+    MOVE.B  #3,D0
+    TRAP    #15
     JMP     RELOOP
 BTST_STATIC_SECT
     LEA     BTST_MESS,A1
@@ -3026,6 +3033,13 @@ PRINT_A
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.L  (SP)+,D1
+    RTS
+    
+PRINT_ADDRESS
+    MOVE.L  D2,-(SP)
+    MOVE.L  A2,D2
+    JSR     OUTPUT_HEXADECIMAL
+    MOVE.L  (SP)+,D2
     RTS
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
