@@ -114,7 +114,6 @@ START:                  ; first instruction of program
        ADDI.B   #8,D1
        ADDI.B   #9,D1
        ADDI.B   #127,D1
-       LEA      B_MESS,A4
        CLR.L    D1
        JSR      DUMMY_SUB
        MOVEM.L  (A1),D0-D1
@@ -232,9 +231,7 @@ MOVE_VALID_MODE_1_JSR
 
 MOVE_PRINT_DESTINATION
     CLR.L   D1
-    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.B  D4,D1
 
     BTST    #8,D1                           *Test the destination mode
@@ -295,27 +292,19 @@ PRINT_ADDR_MODE_SIZE_BIT_13
     
     *If we get here, the addressing mode is the word operation (.W).
     
-    MOVE.B  #'W',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_W                  *Prints a W to the output window.
     JMP     PRINT_SPACE_RTS
 
 PRINT_BYTE_OPERATION
-    MOVE.B  #'B',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_B                  *Prints a B to the output window.
     JMP     PRINT_SPACE_RTS
     
 PRINT_LONG_OPERATION
-    MOVE.B  #'L',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_L                  *Prints a L to the output window.
     JMP     PRINT_SPACE_RTS  
 
 PRINT_SPACE_RTS
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a space character.
-    TRAP    #15
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.L  D4,D1
     RTS
     
@@ -345,20 +334,15 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     
     JSR     ADD_SIZE  
-    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
-    MOVE.B  #'#',D1 *Setting value in D1 to literal value for a space character.
-    TRAP    #15   
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR     PRINT_POUND         *Prints a # to the output window.  
     
 
     MOVE.L  D6,D1
     MOVE.B  #3,D0
     TRAP    #15
 
-    MOVE.B  #',',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.B  D4,D1
     BTST    #5,D1
     BNE     VALID_MODE_1_JSR
@@ -375,9 +359,7 @@ ADD_SIZE
     BNE     ADD_SIZE_WORD
     
     MOVE.L  D1,D4
-    MOVE.B  #'B',D1 *Setting value in D1 to literal value for a B character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_B                  *Prints a B to the output window.
     MOVE.W  (A2)+,D6
     
     
@@ -386,22 +368,15 @@ ADD_SIZE
     
 ADD_SIZE_WORD
     MOVE.L  D1,D4
-    MOVE.B  #'W',D1 *Setting value in D1 to literal value for a W character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_W                  *Prints a W to the output window.
     MOVE.W  (A2)+,D6
 
 
     RTS    
     
 ADD_SIZE_LONG
-    CLR.L   D4
-    MOVE.L  D1,D4
-    MOVE.B  #'L',D1 *Setting value in D1 to literal value for a L character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_L                  *Prints a L to the output window.
     MOVE.L  (A2)+,D6
-
     RTS
     
 BIN_01_THIRD    *Possibilities are MOVEQ, MOVEM, ADDQ, LEA, CLR, Bcc, and JSR.
@@ -463,35 +438,19 @@ CLR_PRINT_ADDR_MODE
     *We pass both cases, it is a .B
     CLR.L   D4
     MOVE.L  D1,D4
-    MOVE.B  #'B',D1 *Setting value in D1 to literal value for a L character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
-    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a L character.
-    TRAP    #15     *Output individual character.
+    JSR     PRINT_B                  *Prints a B to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.L  D4,D1
     RTS
 
 CLR_PRINT_LONG    
-    CLR.L   D4
-    MOVE.L  D1,D4
-    MOVE.B  #'L',D1 *Setting value in D1 to literal value for a L character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
-    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a L character.
-    TRAP    #15     *Output individual character.
-    MOVE.L  D4,D1
+    JSR     PRINT_L                  *Prints a L to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
     
 CLR_PRINT_WORD    
-    CLR.L   D4
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1 *Setting value in D1 to literal value for a L character.
-    MOVE.B  #6,D0   *Picking TRAP task #6. 
-    TRAP    #15     *Output individual character.
-    MOVE.B  #' ',D1 *Setting value in D1 to literal value for a L character.
-    TRAP    #15     *Output individual character.
-    MOVE.L  D4,D1
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
     
 BIN_011_FOURTH  *Possibilities are Bcc and MOVEQ.
@@ -624,11 +583,8 @@ BMI_SECT
 Bcc_PRINT_DISPLACEMENT
     
     MOVE.L  D1,D4
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'$',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    TRAP    #15
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR     PRINT_$             *Prints a $ to the output window.
     MOVE.L  D4,D1
     
     MOVE.L  #24,D6
@@ -801,40 +757,22 @@ LSL_LSR_PRINT
     BTST    #6,D1                       *If it is 01, it is a word address
     BNE     LSL_LSR_PRINT_WORD
                                         *If it gets through both tests it is byte addressing
-    MOVE.L  D1,D4
-    MOVE.B  #'B',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_B                  *Prints a B to the output window.
     JMP     LSL_LSR_PRINT_Dx
     
 LSL_LSR_PRINT_WORD
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
     JMP     LSL_LSR_PRINT_Dx
     
 LSL_LSR_PRINT_LONG
-    MOVE.L  D1,D4
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_L                  *Prints a L to the output window.
     JMP     LSL_LSR_PRINT_Dx
     
 LSL_LSR_PRINT_Dx
-    MOVE.B  #' ',D1                        
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-
-    MOVE.B  #'D',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR     PRINT_D
      
-    MOVE.L  D4,D1
+    MOVE.L  D1,D4
     CLR.L   D6
     MOVE.B  #20,D6
     LSL.L   D6,D1
@@ -844,15 +782,8 @@ LSL_LSR_PRINT_Dx
     
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
-
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.B  #'D',D1 
-                             
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA             *Prints a comma to the output window.
+    JSR     PRINT_D
     
     MOVE.L  D4,D1
     CLR.L   D6
@@ -865,31 +796,21 @@ LSL_LSR_PRINT_Dx
     
     RTS
 LSL_LSR_PRINT_IMMED_LONG
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1
-    TRAP    #15
-    MOVE.B  #'#',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_L                  *Prints a L to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR     PRINT_POUND         *Prints a # to the output window.
 
     MOVE.L  D4,D1
     
     JSR     LSL_LSR_PRINT_Dy
     JMP     RELOOP
 LSL_LSR_PRINT_IMMED_WORD
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1
-    TRAP    #15
-    MOVE.B  #'#',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR     PRINT_POUND         *Prints a # to the output window.
 
     MOVE.L  D4,D1
-     CLR.L   D6
+    CLR.L   D6
     MOVE.B  #20,D6
     LSL.L   D6,D1
     CLR.L   D6
@@ -907,14 +828,9 @@ LSL_LSR_PRINT_IMMED
     BNE     LSL_LSR_PRINT_IMMED_LONG
     BTST    #6,D1
     BNE     LSL_LSR_PRINT_IMMED_WORD
-    MOVE.B  #'B',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1
-    TRAP    #15
-    MOVE.B  #'#',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_B                  *Prints a B to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR     PRINT_POUND         *Prints a # to the output window.
 
     MOVE.L  D4,D1
     
@@ -949,17 +865,10 @@ LSL_LSR_PRINT_Dy
     LSR.L   D6,D1
     
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
-    TRAP    #15
-    
+    TRAP    #15 
 
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.B  #'D',D1 
-                             
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    JSR     PRINT_D
     
     MOVE.L  D4,D1
     CLR.L   D6
@@ -998,14 +907,8 @@ ASR_MEM_SECT        *Output the message 'ASR.'.
     MOVE.B  #14,D0      
     TRAP    #15
     
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     
@@ -1022,14 +925,8 @@ LSR_MEM_SECT        *Output the message 'LSR.'.
     LEA     LSR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
-        MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
@@ -1047,16 +944,9 @@ ROR_MEM_SECT        *Output the message 'ROR.'.
     LEA     ROR_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
-    BTST    #5,D1
     
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     
@@ -1142,14 +1032,8 @@ ADDA_IMMEDIATE_ADDR_TEST
     
     *If test cases pass, then the mode = 111 and we need to pop a word or long based on the opcode
     
-    MOVE.L  D1,D4
-    MOVE.B  #'#',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'$',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_POUND         *Prints a # to the output window.
+    JSR     PRINT_$             *Prints a $ to the output window.
     
     BTST    #8,D1                           *Test the 8th bit to see if it is word addressed or long addressed
     BEQ     ADDA_IMMEDIATE_WORD
@@ -1175,13 +1059,8 @@ ADDA_IMMEDIATE_WORD
     JSR     OUTPUT_HEXADECIMAL
 
 ADDA_PRINT_An
-
-    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA                     *Prints a comma to the output window.
+    JSR     PRINT_A                         *Prints an A to the output window.
     MOVE.L  D4,D1                           *Move orginial opcode back into D1
     
     CLR.L   D6
@@ -1216,26 +1095,12 @@ BTST
 ADDA_PRINT_OPMODE
     BTST    #8,D1
     BNE     ADDA_PRINT_LONG
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1
-    TRAP    #15
-    
-    
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
 ADDA_PRINT_LONG
-    MOVE.L  D1,D4
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1
-    TRAP    #15
-    MOVE.L  D4,D1
-
-    
+    JSR     PRINT_L                  *Prints a L to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
 NOP_SECT                    *Outputs the message 'NOP'.
     LEA     NOP_MESS,A1 
@@ -1337,14 +1202,8 @@ MOVEA_IMMEDIATE_ADDR_TEST
     
     *If test cases pass, then the mode = 111 and we need to pop a word or long based on the opcode
     
-    MOVE.L  D1,D4
-    MOVE.B  #'#',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'$',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_POUND         *Prints a # to the output window.
+    JSR     PRINT_$             *Prints a $ to the output window.
     
     BTST    #12,D1                           *Test the 8th bit to see if it is word addressed or long addressed
     BNE     MOVEA_IMMEDIATE_WORD
@@ -1371,13 +1230,8 @@ MOVEA_IMMEDIATE_WORD
 
 
 MOVEA_PRINT_An
-
-    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    JSR     PRINT_A                         *Prints an A to the output window.
     MOVE.L  D4,D1                           *Move orginial opcode back into D1
     
     CLR.L   D6
@@ -1404,26 +1258,12 @@ MOVEA_VALID_MODE_0_JSR
 MOVEA_PRINT_OPMODE
     BTST    #8,D1
     BNE     MOVEA_PRINT_LONG
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1
-    TRAP    #15
-    
-    
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
 MOVEA_PRINT_LONG
-    MOVE.L  D1,D4
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1
-    TRAP    #15
-    MOVE.L  D4,D1
-
-    
+    JSR     PRINT_L                  *Prints a L to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
  
 ADDQ_SECT     
@@ -1446,20 +1286,14 @@ ADDQ_SECT
     JSR     ADDQ_PRINT_ADDR_MODE
     
     MOVE.W  D1,D4
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15    
+    JSR     PRINT_SPACE         *Prints a space to the output window.    
     
-    MOVE.B  #'#',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_POUND         *Prints a # to the output window.
     MOVE.L  D4,D1
     
     JSR     ADDQ_PRINT_DATA
     
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.L  D4,D1
     
     BTST    #5,D1
@@ -1489,25 +1323,17 @@ ADDQ_PRINT_ADDR_MODE
     BTST    #6,D1
     BNE     ADDQ_PRINT_ADDR_MODE_WORD
 
-    MOVE.B  #'B',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_B                  *Prints a B to the output window.
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
     RTS
     
     JMP     RELOOP
 ADDQ_PRINT_ADDR_MODE_WORD
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    JSR     PRINT_W                  *Prints a W to the output window.
     RTS
 
 ADDQ_PRINT_ADDR_MODE_LONG
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    JSR     PRINT_L                  *Prints a L to the output window.
     RTS
 MOVEM_SECT       
     BTST    #10,D1
@@ -1553,7 +1379,6 @@ MOVEM_PRINT_LIST_REVERSE
     CLR.L   D7
     MOVE.L  #15,D5
     MOVE.L  #0,D7
-*    MOVE.W  (A2)+,D6         *Get the remaining word
         
     JSR     MOVEM_PRINT_LIST_REVERSE_LOOP
     RTS
@@ -1626,22 +1451,16 @@ MOVEM_PRINT_FINAL
 MOVEM_PRINT_An
     MOVE.L  D1,D4
     MOVE.L  D0,D7
-    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_A                         *Prints an A to the output window.
 
     SUB.L   #8,D5
     MOVE.L  D5,D1
 
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
-    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_MINUS         *Prints a - to the output window.
 
-    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_A                         *Prints an A to the output window.
     MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
     CLR.L   D1
     SUB.L   #8,D7
@@ -1650,31 +1469,16 @@ MOVEM_PRINT_An
     MOVE.L  D4,D1
     RTS
 MOVEM_PRINT_Dn
-    MOVE.L  D1,D4
-    CLR.L   D7
-    MOVE.L  D0,D7
-    CLR.L   D0
-    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.L  D7,D1    
-    MOVE.L  D1,D2                    
+    MOVEM.L D1-D2,-(SP)
+    JSR     PRINT_D   
+    MOVE.L  D7,D2                    
     JSR     OUTPUT_HEXADECIMAL    
-    MOVE.W  D4,D1
-    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
-    CLR.L   D1
+    JSR     PRINT_MINUS         *Prints a - to the output window.
+    JSR     PRINT_D 
     MOVE.L  D5,D1   
     MOVE.L  D1,D2                    
     JSR     OUTPUT_HEXADECIMAL
-    
-    MOVE.L  D4,D1
+    MOVEM.L (SP)+,D1-D2
     RTS
 
 ********
@@ -1683,22 +1487,16 @@ MOVEM_PRINT_REVERSE_An
     CLR.L   D7
     MOVE.L  D0,D7
     CLR.L   D0
-    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_A                         *Prints an A to the output window.
 
     MOVE.L  #7,D1
     SUB.L   D5,D1
 
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
-    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_MINUS         *Prints a - to the output window.
 
-    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_A                         *Prints an A to the output window.
     MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
     CLR.L   D1
     MOVE.L  #7,D1
@@ -1711,22 +1509,16 @@ MOVEM_PRINT_REVERSE_Dn
     CLR.L   D7
     MOVE.L  D0,D7
     CLR.L   D0
-    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_D
 
     MOVE.L  #15,D1
     SUB.L   D5,D1
 
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
-    MOVE.B  #'-',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_MINUS         *Prints a - to the output window.
 
-    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_D
     MOVE.L  #3,D0                   *Move trap task  #15 to convert to decimal and print
     CLR.L   D1
     MOVE.L  #15,D1
@@ -1791,9 +1583,7 @@ CHECK_ADDR_MODE_100
 
 JSR_COMMA  
     MOVE.L  D1,D4
-    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.L  D4,D1
     RTS
     
@@ -1806,24 +1596,14 @@ VALID_MODE_0_MOVEM_REG_MEM_JSR
     JMP     RELOOP
 
 MOVEM_PRINT_LONG    
-    MOVE.L  D1,-(SP)
-    MOVE.B  #'L',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  (SP)+,D1
+    JSR     PRINT_L                  *Prints a L to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
  
 MOVEM_PRINT_WORD    
     MOVE.L  D1,-(SP)
-    MOVE.B  #'W',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.L  (SP)+,D1
     RTS
    
@@ -1842,9 +1622,7 @@ JSR_SECT
         
     MOVE.L  D1,D4
     
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     
     MOVE.L  D4,D1    
     BTST    #5,D1
@@ -1883,9 +1661,7 @@ LEA_PRINT_IMMED_ADDR_LONG
 LEA_PRINT
     MOVE.L  D1,D4
     
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     
     MOVE.L  D4,D1
     BTST    #5,D1
@@ -1897,12 +1673,8 @@ VALID_MODE_0_LEA_JSR
     JSR     VALID_MODE_0
 LEA_PRINT_An
    * JSR     LEA_PRINT_IMMED_ADDR_LONG
-    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'A',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    JSR     PRINT_A                         *Prints an A to the output window.
     MOVE.L  D4,D1                           *Move orginial opcode back into D1
     
     CLR.L   D6
@@ -1930,10 +1702,7 @@ MOVEQ_SECT
     
 MOVEQ_PRINT
     MOVE.L  D1,D4
-    MOVE.B  #'#',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
+    JSR     PRINT_POUND         *Prints a # to the output window.
     
     MOVE.L  D4,D1
     CLR.L   D6
@@ -1947,12 +1716,8 @@ MOVEQ_PRINT
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
-    MOVE.B  #',',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'D',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    JSR     PRINT_D
     MOVE.L  D4,D1                           *Move orginial opcode back into D1
     
     CLR.L   D6
@@ -1971,13 +1736,9 @@ MOVEQ_PRINT
 
 OPMODE_MULS_EA_DN_TEST_WORD
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_W                  *Prints a W to the output window.
     
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.W  D4,D1
 
     BTST    #5,D1
@@ -1985,9 +1746,7 @@ OPMODE_MULS_EA_DN_TEST_WORD
     BEQ     VALID_MODE_0_MULS_EA_DN
     JSR     VALID_MODE_1
     
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
     
     MOVE.B  #20,D2
@@ -1996,11 +1755,8 @@ OPMODE_MULS_EA_DN_TEST_WORD
     MOVE.B  #29,D2
     LSR.L   D2,D1
     MOVE.W  D1,D5
-    
 
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
@@ -2009,15 +1765,8 @@ OPMODE_MULS_EA_DN_TEST_WORD
     JMP     RELOOP
     
 OPMODE_MULS_EA_DN_TEST_LONG
-    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1
+    JSR     PRINT_L                  *Prints a L to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
 
 
     MOVE.B  #20,D2                      
@@ -2026,19 +1775,14 @@ OPMODE_MULS_EA_DN_TEST_LONG
     MOVE.B  #29,D2
     LSR.L   D2,D1
     MOVE.W  D1,D5
-    
 
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
     TRAP     #15
 
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
 
     BTST    #5,D1
@@ -2072,12 +1816,9 @@ PRINT_OPMODE_MULS_EA_DN
 
 VALID_MODE_0_MULS_EA_DN
     JSR     VALID_MODE_0
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     
-    MOVE.B  #'D',D1
-    TRAP    #15
+    JSR     PRINT_D
     MOVE.W  D4,D1
     JSR     DN_REGISTER
     JMP     RELOOP
@@ -2089,10 +1830,10 @@ LSL_REG_SECT                    *Output the message 'LSL.'.
     JSR     LSL_LSR_PRINT
     
 *    MOVE.L  D1,D4
-*    MOVE.B  #'W',D1
+*    MOVE.B  #'',D1
 *    MOVE.B  #6,D0
 *    TRAP    #15
-*    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
+*    MOVE.B  #'',D1                         *Print the number in hexadecimal form, addressing is in base 16
 *    MOVE.B  #6,D0
 *    TRAP    #15
 *    MOVE.L  D4,D1
@@ -2117,14 +1858,8 @@ LSL_MEM_SECT                    *Output the message 'LSL.'.
     MOVE.B  #14,D0      
     TRAP    #15
     
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     
@@ -2135,14 +1870,8 @@ ASL_MEM_SECT                    *Output the message 'ASL.'.
     MOVE.B  #14,D0      
     TRAP    #15
     
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     
@@ -2152,14 +1881,8 @@ ROL_MEM_SECT                    *Output the message 'ROL.'.
     LEA     ROL_MESS,A1
     MOVE.B  #14,D0      
     TRAP    #15
-    MOVE.L  D1,D4
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #' ',D1                         *Print the number in hexadecimal form, addressing is in base 16
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.L  D4,D1
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     
@@ -2216,20 +1939,14 @@ BTST_DYNAMIC_VALID
     LSR.L   D2,D1
     MOVE.W  D1,D5
     
-    MOVE.B   #' ',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    TRAP     #15     *Output individual character.
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR      PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
     TRAP     #15
     
-    MOVE.B   #',',D1 *Setting value in D1 to literal value for a space character.
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    TRAP     #15     *Output individual character.
-    
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     
     CLR.L   D5
     JMP     PRINT_VALID_BTST_DYNAMIC
@@ -2244,24 +1961,13 @@ PRINT_OPMODE_ADD_EA_DN
 
 OPMODE_ADD_EA_DN_TEST_WORD
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.W  D4,D1
-
-
     BTST    #5,D1
-    
     BEQ     VALID_MODE_0_ADD_EA_DN
     JSR     VALID_MODE_1
-    
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
     
     MOVE.B  #20,D2
@@ -2270,11 +1976,8 @@ OPMODE_ADD_EA_DN_TEST_WORD
     MOVE.B  #29,D2
     LSR.L   D2,D1
     MOVE.W  D1,D5
-    
 
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
@@ -2282,28 +1985,18 @@ OPMODE_ADD_EA_DN_TEST_WORD
     MOVE.W  D4,D1
     JMP     RELOOP
 
-
-
 OPMODE_ADD_EA_DN_TEST_BYTE
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'B',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_B                  *Prints a B to the output window.
     
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1
-
+    JSR     PRINT_SPACE         *Prints a space to the output window.
 
     BTST    #5,D1
     
     BEQ     VALID_MODE_0_ADD_EA_DN
     JSR     VALID_MODE_1
     
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
     
     MOVE.B  #20,D2
@@ -2313,10 +2006,7 @@ OPMODE_ADD_EA_DN_TEST_BYTE
     LSR.L   D2,D1
     MOVE.W  D1,D5
 
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
@@ -2328,24 +2018,17 @@ OPMODE_ADD_EA_DN_TEST_BYTE
     
 OPMODE_ADD_EA_DN_TEST_LONG
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_L                  *Prints a L to the output window.
     
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.W  D4,D1
-
 
     BTST    #5,D1
     
     BEQ     VALID_MODE_0_ADD_EA_DN
     JSR     VALID_MODE_1
     
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
     
     MOVE.B  #20,D2
@@ -2355,10 +2038,7 @@ OPMODE_ADD_EA_DN_TEST_LONG
     LSR.L   D2,D1
     MOVE.W  D1,D5
     
-
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
@@ -2368,12 +2048,9 @@ OPMODE_ADD_EA_DN_TEST_LONG
 
 VALID_MODE_0_ADD_EA_DN
     JSR     VALID_MODE_0
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     
-    MOVE.B  #'D',D1
-    TRAP    #15
+    JSR     PRINT_D
     MOVE.W  D4,D1
     JSR     DN_REGISTER
     JMP     RELOOP
@@ -2385,36 +2062,23 @@ PRINT_OPMODE_ADD_DN_EA
     BNE     OPMODE_ADD_DN_EA_TEST_WORD
     JMP     OPMODE_ADD_DN_EA_TEST_BYTE
 OPMODE_ADD_DN_EA_TEST_WORD
-    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'W',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1
-
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
     
     MOVE.B  #20,D2
-    MOVE.B  D1,D4
+    MOVE.W  D1,D4
     LSL.L   D2,D1
     MOVE.B  #29,D2
     LSR.L   D2,D1
     MOVE.W  D1,D5
-    
 
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
     TRAP     #15
 
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
 
     BTST    #5,D1
@@ -2425,81 +2089,52 @@ OPMODE_ADD_DN_EA_TEST_WORD
     MOVE.W  D4,D1
     JMP     RELOOP
 
-
-
 OPMODE_ADD_DN_EA_TEST_BYTE
-    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'B',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1
+    JSR     PRINT_B                  *Prints a B to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
 
     MOVE.B  #20,D2
-    MOVE.B  D1,D4
+    MOVE.W  D1,D4
     LSL.L   D2,D1
     MOVE.B  #29,D2
     LSR.L   D2,D1
     MOVE.W  D1,D5
-    
 
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
     TRAP     #15
 
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
 
     BTST    #5,D1
     
     BEQ     VALID_MODE_0_ADD_DN_EA
     JSR     VALID_MODE_1
-    
-    MOVE.W  D4,D1
     JMP     RELOOP
 
 
     
 OPMODE_ADD_DN_EA_TEST_LONG
-    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    MOVE.B  #'L',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    
-    MOVE.B  #' ',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1
-
+    JSR     PRINT_L                  *Prints a L to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
 
     MOVE.B  #20,D2
-    MOVE.B  D1,D4
+    MOVE.W  D1,D4
     LSL.L   D2,D1
     MOVE.B  #29,D2
     LSR.L   D2,D1
     MOVE.W  D1,D5
     
-
-    MOVE.B   #6,D0   *Picking TRAP task #6. 
-    MOVE.B   #'D',D1 *Setting value in D1 to literal value for a space character.
-    TRAP     #15     *Output individual character.
+    JSR     PRINT_D
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
     TRAP     #15
 
-    MOVE.B  #',',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     MOVE.W  D4,D1
 
     BTST    #5,D1
@@ -2818,11 +2453,8 @@ VALID_MODE_0_JSR
     JSR     VALID_MODE_0
     JMP     RELOOP
 PRINT_VALID_BTST_STATIC
-    LEA     SPACE,A1                *Print a space to separate BTST with the addressing mode
-    MOVE.B  #14,D0
-    TRAP    #15
-    LEA     POUND,A1                *Load and print a #, this is specific to this particular mode
-    TRAP    #15
+    JSR     PRINT_SPACE
+    JSR     PRINT_POUND
     
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
     
@@ -2833,9 +2465,7 @@ PRINT_VALID_BTST_STATIC
     TRAP    #15
     MOVE.W  D4,D1
     
-    MOVE.B  #14,D0
-    LEA     COMMA,A1
-    TRAP    #15
+    JSR     PRINT_COMMA
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     
@@ -2849,14 +2479,10 @@ VALID_MODE_1     *Options here are
     BNE     VALID_MODE_11
     
     *Bit mode here is 10, which means the full code is 100 or -(An)
-    MOVE.B  #'-',D1                 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0                   *Picking TRAP task #6. 
-    TRAP    #15                     *Output individual character.
+    JSR     PRINT_MINUS         *Prints a - to the output window.
    
-    MOVE.B  #'(',D1                 *Begin printing of the (An) part
-    TRAP    #15
-    MOVE.B  #'A',D1
-    TRAP    #15
+    JSR     PRINT_OPEN_PAREN             *Prints a ( to the output window.
+    JSR     PRINT_A                         *Prints an A to the output window.
     
     MOVE.W  D4,D1                    *Copy original values back into D1
               
@@ -2865,20 +2491,14 @@ VALID_MODE_1     *Options here are
     LSR.L   D6,D1
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
-    
-    MOVE.B  #')',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.W  D4,D1                    *Move original unaltered bits back to D1
+    JSR     PRINT_CLOSE_PAREN             *Prints a ) to the output window.
     
     MOVEM.L (SP)+,D0-D7
     RTS
 VALID_MODE_11    
     BTST    #2,D1
     BNE     VALID_MODE_111_POUND
-    MOVE.B  #'$',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_$                 *Prints a $ to the output window.
     
     MOVE.W  D4,D1
     BTST    #0,D1
@@ -2894,22 +2514,15 @@ VALID_MODE_11
     RTS
     
 VALID_MODE_111_POUND
-    MOVE.B  #'#',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    MOVE.B  #'$',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_POUND         *Prints a # to the output window.
+    JSR     PRINT_$             *Prints a $ to the output window.
     MOVE.W  D4,D1
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
     
     CMP.W   #0,D6
     BEQ     RTS
     
-    
     MOVE.L  D6,D1
-    
-    
     
     MOVE.L  D1,D2                    
     JSR     OUTPUT_HEXADECIMAL
@@ -2917,7 +2530,6 @@ VALID_MODE_111_POUND
     MOVE.W  D4,D1                    *Copy original values back into D1
     MOVEM.L (SP)+,D0-D7
     RTS
-    
 RTS
     RTS
 VALID_MODE_111_LONG
@@ -2950,9 +2562,7 @@ VALID_MODE_0                         *Options are Dn, (An), or (An)+
 VALID_MODE_00
     BTST    #3,D1
     BNE     VALID_MODE_001
-    MOVE.B  #'D',D1
-    MOVE.B  #6,D0
-    TRAP    #15                   
+    JSR     PRINT_D                
     
     MOVE.W  D4,D1  
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
@@ -2968,16 +2578,13 @@ VALID_MODE_01
     MOVE.B  #14,D0
     TRAP    #15
     
-    
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    *Shift bits to isolate register number
     LSR.L   D6,D1                    *Shift bits back to position so we can get the number
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
-    MOVE.B   #')',D1                 *Setting value in D1 to literal value for a space character.
-    MOVE.B   #6,D0                   *Picking TRAP task #6. 
-    TRAP     #15                     *Output individual character.
+    JSR     PRINT_CLOSE_PAREN             *Prints a ) to the output window.
     MOVE.W  D4,D1                    *Copy original values back into D1
     BTST    #3,D1
     BNE     VALID_MODE_011 
@@ -2985,9 +2592,7 @@ VALID_MODE_01
     RTS
 
 VALID_MODE_001
-    MOVE.B  #'A',D1
-    MOVE.B  #6,D0
-    TRAP    #15                   
+    JSR     PRINT_A                         *Prints an A to the output window.                   
     
     MOVE.W  D4,D1  
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
@@ -3000,9 +2605,7 @@ VALID_MODE_001
     RTS
 
 VALID_MODE_011
-    LEA     PLUS,A1
-    MOVE.B  #14,D0
-    TRAP    #15
+    JSR     PRINT_PLUS
     MOVEM.L (SP)+,D0-D7
     RTS
 
@@ -3011,14 +2614,10 @@ VALID_MODE_SOURCE_DEST_1     *Options here are
     BNE     VALID_MODE_SOURCE_DEST_11
     
     *Bit mode here is 10, which means the full code is 100 or -(An)
-    MOVE.B  #'-',D1                 *Setting value in D1 to literal value for a space character.
-    MOVE.B  #6,D0                   *Picking TRAP task #6. 
-    TRAP    #15                     *Output individual character.
+    JSR     PRINT_MINUS         *Prints a - to the output window.
    
-    MOVE.B  #'(',D1                 *Begin printing of the (An) part
-    TRAP    #15
-    MOVE.B  #'A',D1
-    TRAP    #15
+    JSR     PRINT_OPEN_PAREN             *Prints a ( to the output window.
+    JSR     PRINT_A                         *Prints an A to the output window.
     
     MOVE.W  D4,D1                    *Copy original values back into D1
               
@@ -3028,24 +2627,19 @@ VALID_MODE_SOURCE_DEST_1     *Options here are
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
-    MOVE.B  #')',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_CLOSE_PAREN             *Prints a ) to the output window.
     MOVE.W  D4,D1                    *Move original unaltered bits back to D1
-    
     
     RTS
 VALID_MODE_SOURCE_DEST_11    
     BTST    #11,D1
     BNE     VALID_MODE_SOURCE_DEST_111_POUND
-    MOVE.B  #'$',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_$                             *Prints a $ to the output window.
     
     MOVE.W  D4,D1
     BTST    #9,D1
     BNE     VALID_MODE_SOURCE_DEST_111_LONG
-    MOVE.W  (A2)+,D6               *This gets the remaining word from the function
+    MOVE.W  (A2)+,D6                            *This gets the remaining word from the function
 
     MOVE.W  D6,D1
     MOVE.L  D1,D2                    
@@ -3055,9 +2649,7 @@ VALID_MODE_SOURCE_DEST_11
     RTS
     
 VALID_MODE_SOURCE_DEST_111_POUND
-    MOVE.B  #'#',D1
-    MOVE.B  #6,D0
-    TRAP    #15
+    JSR     PRINT_POUND         *Prints a # to the output window.
     
     MOVE.W  D4,D1
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
@@ -3084,9 +2676,7 @@ VALID_MODE_SOURCE_DEST_0                         *Options are Dn, (An), or (An)+
 VALID_MODE_SOURCE_DEST_00
     BTST    #6,D1
     BNE     VALID_MODE_SOURCE_DEST_001
-    MOVE.B  #'D',D1
-    MOVE.B  #6,D0
-    TRAP    #15                   
+    JSR     PRINT_D                   
     
     MOVE.W  D4,D1  
     MOVE.B  #20,D6                   *Set the bit shift to 20 so we can isolate the register number 
@@ -3114,20 +2704,14 @@ VALID_MODE_SOURCE_DEST_01
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
-    
-    
-    MOVE.B   #')',D1                 *Setting value in D1 to literal value for a space character.
-    MOVE.B   #6,D0                   *Picking TRAP task #6. 
-    TRAP     #15                     *Output individual character.
+    JSR     PRINT_CLOSE_PAREN             *Prints a ) to the output window.
     MOVE.W  D4,D1                    *Copy original values back into D1
     BTST    #6,D1
     BNE     VALID_MODE_SOURCE_DEST_011 
     RTS
 
 VALID_MODE_SOURCE_DEST_001
-    MOVE.B  #'A',D1
-    MOVE.B  #6,D0
-    TRAP    #15                   
+    JSR     PRINT_A                         *Prints an A to the output window.                   
     
     MOVE.W  D4,D1  
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
@@ -3140,9 +2724,7 @@ VALID_MODE_SOURCE_DEST_001
     RTS
 
 VALID_MODE_SOURCE_DEST_011
-    LEA     PLUS,A1
-    MOVE.B  #14,D0
-    TRAP    #15
+    JSR     PRINT_PLUS
     RTS
 
 PRINT_INVALID_OPCODE
@@ -3357,6 +2939,97 @@ OUTPUT_ERRORMESSAGE1
               MOVE.B  #14, D0
               TRAP    #15   
               BRA    GO_AGAIN
+PRINT_D
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'D',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_COMMA
+    MOVE.L  D1,-(SP)
+    MOVE.B  #',',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_SPACE
+    MOVE.L  D1,-(SP)
+    MOVE.B  #' ',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_PLUS
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'+',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_MINUS
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'-',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_POUND
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'#',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_$
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'$',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_OPEN_PAREN
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'(',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_CLOSE_PAREN
+    MOVE.L  D1,-(SP)
+    MOVE.B  #')',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_B
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'B',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_W
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'W',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_L
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'L',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
+PRINT_A
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'A',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
 LF      EQU     $0A             ASCII code for Line Feed
@@ -3402,17 +3075,17 @@ BPL_MESS        DC.B    'BPL',0
 BVC_MESS        DC.B    'BVC',0  
 BVS_MESS        DC.B    'BVS',0
 TRAP_MESS       DC.B    'TRAP',0
-B_MESS          DC.B    'B',0
-W_MESS          DC.B    'W',0
-L_MESS          DC.B    'L',0
+*B_MESS          DC.B    'B',0
+*W_MESS          DC.B    'W',0
+*L_MESS          DC.B    'L',0
 NEXT_LINE       DC.B    CR,LF,0    
 INVALID_MESS    DC.B    'INVALID OPCODE',0
-COMMA           DC.B    ',',0
-POUND           DC.B    '#',0
-SPACE           DC.B    ' ',0
-MINUS           DC.B    '-',0
-PLUS            DC.B    '+',0
-CLOSE_PAREN     DC.B    ')',0
+*COMMA           DC.B    ',',0
+*POUND           DC.B    '#',0
+*SPACE           DC.B    ' ',0
+*MINUS           DC.B    '-',0
+*PLUS            DC.B    '+',0
+*CLOSE_PAREN     DC.B    ')',0
 
 
 *Address Register and Data register printout
