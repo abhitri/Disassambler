@@ -14,7 +14,7 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
     ORG     $1000
 START:                  ; first instruction of program
 
-    BRA         SKIP
+    BRA         INPUT
     MOVEM.W     (A7),D1-D7
     MOVEM.L     (A6),D2-D7
     MOVEM.W     (A7),A1-A7
@@ -2574,9 +2574,8 @@ VALID_MODE_00
     MOVEM.L (SP)+,D0-D7
     RTS
 VALID_MODE_01    
-    LEA     INDIRECT_ADDR_MESS,A1
-    MOVE.B  #14,D0
-    TRAP    #15
+    JSR     PRINT_OPEN_PAREN        *Prints a ( to the output window.
+    JSR     PRINT_A                 *Prints an A to the output window.
     
     MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
     LSL.L   D6,D1                    *Shift bits to isolate register number
@@ -2690,10 +2689,8 @@ VALID_MODE_SOURCE_DEST_00
     
     RTS
 VALID_MODE_SOURCE_DEST_01    
-    LEA     INDIRECT_ADDR_MESS,A1
-    MOVE.B  #14,D0
-    TRAP    #15
-    
+    JSR     PRINT_OPEN_PAREN        *Prints a ( to the output window.
+    JSR     PRINT_A                 *Prints an A to the output window. 
     
     MOVE.W  D4,D1  
     MOVE.B  #20,D6                   *Set the bit shift to 20 so we can isolate the register number 
@@ -3075,28 +3072,14 @@ BPL_MESS        DC.B    'BPL',0
 BVC_MESS        DC.B    'BVC',0  
 BVS_MESS        DC.B    'BVS',0
 TRAP_MESS       DC.B    'TRAP',0
-*B_MESS          DC.B    'B',0
-*W_MESS          DC.B    'W',0
-*L_MESS          DC.B    'L',0
 NEXT_LINE       DC.B    CR,LF,0    
 INVALID_MESS    DC.B    'INVALID OPCODE',0
-*COMMA           DC.B    ',',0
-*POUND           DC.B    '#',0
-*SPACE           DC.B    ' ',0
-*MINUS           DC.B    '-',0
-*PLUS            DC.B    '+',0
-*CLOSE_PAREN     DC.B    ')',0
 
-
-*Address Register and Data register printout
-A_REGISTER_MESS DC.B    'A',0
-D_REGISTER_MESS DC.B    'D',0
-INDIRECT_ADDR_MESS DC.B '(A',0
-MESSAGE0         DC.B 'Welcome to Disassembler.',CR,LF,'Created by: Abhi Trivedi, Conor Van Achte, and Samuel Meyerding.',CR,LF,0       
+MESSAGE0         DC.B CR,LF,'Welcome to Disassembler.',CR,LF,'Created by: Abhi Trivedi, Conor Van Achte, and Samuel Meyerding.',CR,LF,0       
 MESSAGE1         DC.B 'Please enter a starting address for your program: ',0
 MESSAGE2         DC.B 'Please enter an ending address for your program: ',0
 ERRORMESSAGE1    DC.B 'Your ending address is less than the starting address',CR,LF,0
-ENDOFPROGRAM     DC.B 'Do you want to disassemble some more memory? (y/n)',CR,LF,0
+ENDOFPROGRAM     DC.B CR,LF,'Do you want to disassemble some more memory? (y/n)',CR,LF,0
 NEWLINE          DC.B CR,LF,0
 
 QUIT
