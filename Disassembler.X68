@@ -209,9 +209,7 @@ BIN_0000_FOURTH  *Possibilities are ADDI and BTST.
     BTST    #11,D1
     BNE     BTST_STATIC_SECT
     BTST    #8,D1
-    BNE     BTST_DYNAMIC_SECT
-    
-
+    BNE     BTST_DYNAMIC_SECT    
     
 ADDI_SECT                   *Outputs the message 'ADDI.'.
     MOVE.W  D1,D3                   *Copy OPCode into D3 in order to allow for isolation of bits.
@@ -1046,7 +1044,7 @@ CMPA_SECT                *Outputs the message 'CMPA.'.
     MOVE.B  #14,D0      
     TRAP    #15  
     JSR     PRINT_OPMODE_ADD_EA_AN
-    JMP     RELOOP 
+    JMP     RELOOP
  
 SUB_SECT                    *Outputs the message 'SUB.'.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
@@ -1819,6 +1817,8 @@ TRAP_SECT
     TRAP    #15
     JMP     RELOOP
 BTST_STATIC_SECT
+    BTST    #8,D1
+    BNE     BTST_DYNAMIC_SECT
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
     AND.W   #%1111111111000000,D2   *Isolating bits for detrmining validity of OPCode.
     CMP.W   #%0000100000000000,D2   *Comparing with valid value.
