@@ -10,17 +10,16 @@
 NOP_CODE    EQU     %0100111001110001     
 RTS_CODE    EQU     %0100111001110101
 TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
-   
+PAGE_SIZE   EQU     25   
     ORG     $1000
 START:                  ; first instruction of program
-
-   
-      
+            MOVEA.L  #0,A6
 INPUT        
              LEA MESSAGE0,A1
              MOVE.B  #14, D0
              TRAP    #15
 GO_AGAIN
+             MOVEA.L  #0,A6
              CLR.L   D3
              CLR.L   D4
              LEA MESSAGE1,A1
@@ -60,11 +59,13 @@ ENDMESSAGE
             CMP.B   #'n',D1
             BEQ     QUIT
             BRA     ENDMESSAGE
-                
-SKIP                                  
-    MOVE.L  #$1000,A2       *Starting address for code to be disassembled.
-    MOVE.L  #$3000,A3
+
+CALL_ONE_PAGE_PRINTED
+    JSR     ONE_PAGE_PRINTED             
 RELOOP
+    CMP.W   #PAGE_SIZE,A6
+    BEQ     CALL_ONE_PAGE_PRINTED
+    ADD    #1,A6
     CMP.L   A2,A3
     BLT     ENDMESSAGE
     LEA     NEXT_LINE,A1 
@@ -2870,7 +2871,7 @@ PRINT_COMMA
     RTS
 PRINT_SPACE
     MOVE.L  D1,-(SP)
-    MOVE.B  #' ',D1
+    MOVE.B  #9,D1   *TAB
     MOVE.B  #6,D0
     TRAP    #15
     MOVE.L  (SP)+,D1
@@ -2952,6 +2953,17 @@ PRINT_ADDRESS
     JSR     OUTPUT_HEXADECIMAL
     MOVE.L  (SP)+,D2
     RTS
+ONE_PAGE_PRINTED
+    MOVEA.L #0,A6
+    LEA     PAGE_PRINT_MESSAGE,A1
+    MOVE.B  #13,D0
+    TRAP    #15
+    MOVE.B  #5,D0
+DID_THEY_PRESS_ENTER
+    TRAP    #15
+    CMP.B   #$D,D1
+    BNE     DID_THEY_PRESS_ENTER
+    RTS
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
 LF      EQU     $0A             ASCII code for Line Feed
@@ -3003,6 +3015,7 @@ INVALID_MESS    DC.B    'INVALID OPCODE',0
 MESSAGE0         DC.B CR,LF,'Welcome to Disassembler.',CR,LF,'Created by: Abhi Trivedi, Conor Van Achte, and Samuel Meyerding.',CR,LF,0       
 MESSAGE1         DC.B 'Please enter a starting address for your program: ',0
 MESSAGE2         DC.B 'Please enter an ending address for your program: ',0
+PAGE_PRINT_MESSAGE  DC.B CR,LF,'Please press enter to continue: ',0
 ERRORMESSAGE1    DC.B 'Your ending address is less than the starting address',CR,LF,0
 ENDOFPROGRAM     DC.B CR,LF,'Do you want to disassemble some more memory? (y/n)',CR,LF,0
 NEWLINE          DC.B CR,LF,0
@@ -3026,6 +3039,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 
