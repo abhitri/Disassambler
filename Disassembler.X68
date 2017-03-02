@@ -287,17 +287,21 @@ BIN_01_THIRD    *Possibilities are MOVEQ, MOVEM, ADDQ, LEA, CLR, Bcc, and JSR.
 BIN_010_FOURTH  *Possibilities are MOVEM, ADDQ, LEA, CLR, JSR.
     BTST    #12,D1
     BNE     ADDQ_SECT
-BIN_0100_FIFTH  *Possibilities are MOVEM, LEA, CLR, JSR.
+BIN_0100_FIFTH  *Possibilities are MOVEM, LEA, CLR, JSR, JMP.
     MOVE.W  D1,D2                   *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
     AND.W   #%0000101100000000,D2   *These bits will tell me if this is MOVEM.
     CMP.W   #%0000100000000000,D2   *Compare with the values that would be set for MOVEM
-    BEQ     MOVEM_SECT              *Possibilities are now LEA, CLR, and JSR.
+    BEQ     MOVEM_SECT              *Possibilities are now LEA, CLR, JSR, and JMP.
+    MOVE.W  D1,D2                   *Create a copy of D1 in D2 in order to mask some of its bits and keep original.
+    AND.W   #%1111111111000000,D2   *These bits will tell me if this is JMP.
+    CMP.W   #%0100111011000000,D2   *Compare with the values that would be set for JMP
+    BEQ     JMP_SECT                *Possibilities are now LEA, CLR, and JSR.
     BTST    #8,D1                   *If this bit is set, then the instruction can only be LEA.
     BNE     LEA_SECT                *Possibilities are now CLR and JSR.
     BTST    #11,D1                  *If this bit is set, then the instruction can only be JSR.
     BNE     JSR_SECT                *Only possibility is now CLR.
 CLR_SECT
-     MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
+    MOVE.B  #%11110101,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity.
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
@@ -1529,18 +1533,11 @@ JSR_SECT
     LEA     JSR_MESS,A1     *Outputs the message 'JSR'.
     MOVE.B  #14,D0      
     TRAP    #15
-    
-        
-    MOVE.L  D1,D4
-    
-    JSR     PRINT_SPACE         *Prints a space to the output window.
-    
-    MOVE.L  D4,D1    
+              
+    JSR     PRINT_SPACE         *Prints a space to the output window. 
     BTST    #5,D1
     BEQ     VALID_MODE_0_JSR
     JSR     VALID_MODE_1   
-    MOVE.L  D4,D1
-
     JMP     RELOOP
 
 LEA_SECT
@@ -2964,6 +2961,18 @@ DID_THEY_PRESS_ENTER
     CMP.B   #$D,D1
     BNE     DID_THEY_PRESS_ENTER
     RTS
+JMP_SECT
+    MOVE.L  #%11000100,D7
+    JSR     SRC_EFF_ADDR_MODE_REG
+    BTST    #0,D3
+    BEQ     PRINT_INVALID_OPCODE
+    LEA     JMP_MESS,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    JSR     PRINT_SPACE
+    BEQ     VALID_MODE_0_JSR
+    JSR     VALID_MODE_1 
+    JMP     RELOOP
             SIMHALT             ; halt simulator
 CR      EQU     $0D             ASCII code for Carriage Return
 LF      EQU     $0A             ASCII code for Line Feed
@@ -3009,6 +3018,7 @@ BPL_MESS        DC.B    'BPL',0
 BVC_MESS        DC.B    'BVC',0  
 BVS_MESS        DC.B    'BVS',0
 TRAP_MESS       DC.B    'TRAP',0
+JMP_MESS        DC.B    'JMP',0
 NEXT_LINE       DC.B    CR,LF,0    
 INVALID_MESS    DC.B    'INVALID OPCODE',0
 
@@ -3039,6 +3049,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 
