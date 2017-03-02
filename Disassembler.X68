@@ -63,10 +63,10 @@ ENDMESSAGE
 CALL_ONE_PAGE_PRINTED
     JSR     ONE_PAGE_PRINTED             
 RELOOP
-    CMP.W   #PAGE_SIZE,A6
+    CMPA.W  #PAGE_SIZE,A6
     BEQ     CALL_ONE_PAGE_PRINTED
     ADD    #1,A6
-    CMP.L   A2,A3
+    CMPA.L  A2,A3
     BLT     ENDMESSAGE
     LEA     NEXT_LINE,A1 
     MOVE.B  #14,D0      
@@ -1031,14 +1031,23 @@ CMP_SECT                *Outputs the message 'CMP.'.
     MOVE.W  D1,D2
     AND.W   #%0000000111000000,D2
     CMP.W   #%0000000010000000,D2
-    BGT     PRINT_INVALID_OPCODE
+    BGT     CMPA_SECT
     LEA     CMP_MESS,A1 
     MOVE.B  #14,D0      
-    TRAP    #15
-    
-    
+    TRAP    #15    
     JSR     PRINT_OPMODE_ADD_EA_DN
-    JMP     RELOOP     
+    JMP     RELOOP   
+CMPA_SECT                *Outputs the message 'CMPA.'.
+    BTST    #6,D1
+    BEQ     PRINT_INVALID_OPCODE
+    BTST    #7,D1
+    BEQ     PRINT_INVALID_OPCODE
+    LEA     CMPA_MESS,A1 
+    MOVE.B  #14,D0      
+    TRAP    #15  
+    JSR     PRINT_OPMODE_ADD_EA_AN
+    JMP     RELOOP 
+ 
 SUB_SECT                    *Outputs the message 'SUB.'.
     MOVE.W  D1,D2                   *Copying OPCode Word for isolation of static bits.
     AND.W   #%1111000000000000,D2   *Isolating bits for detrmining validity of OPCode.
@@ -1837,8 +1846,6 @@ BTST_DYNAMIC_SECT
     BRA     BTST_DYNAMIC_VALID
     
     JMP     RELOOP              *Reiterate to beginning of disassembler.
-DUMMY_SUB
-    RTS
     
 BTST_DYNAMIC_VALID
     LEA     BTST_MESS,A1
@@ -1870,6 +1877,13 @@ PRINT_OPMODE_ADD_EA_DN
     BTST    #6,D1
     BNE     OPMODE_ADD_EA_DN_TEST_WORD
     JMP     OPMODE_ADD_EA_DN_TEST_BYTE
+    
+PRINT_OPMODE_ADD_EA_AN
+    BTST    #7,D1
+    BNE     OPMODE_ADD_EA_AN_TEST_LONG
+    BTST    #6,D1
+    BNE     OPMODE_ADD_EA_AN_TEST_WORD
+    JMP     OPMODE_ADD_EA_AN_TEST_BYTE
 
 OPMODE_ADD_EA_DN_TEST_WORD
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
@@ -1896,6 +1910,33 @@ OPMODE_ADD_EA_DN_TEST_WORD
     TRAP     #15
     MOVE.W  D4,D1
     JMP     RELOOP
+    
+OPMODE_ADD_EA_AN_TEST_WORD
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    MOVE.W  D4,D1
+    BTST    #5,D1
+    BEQ     VALID_MODE_0_ADD_EA_DN
+    JSR     VALID_MODE_1
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    MOVE.W  D4,D1
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+
+    JSR     PRINT_A
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+    MOVE.W  D4,D1
+    JMP     RELOOP
+
 
 OPMODE_ADD_EA_DN_TEST_BYTE
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
@@ -1925,8 +1966,35 @@ OPMODE_ADD_EA_DN_TEST_BYTE
     TRAP     #15
     MOVE.W  D4,D1
     JMP     RELOOP
+    
+OPMODE_ADD_EA_AN_TEST_BYTE
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    JSR     PRINT_B                  *Prints a B to the output window.
+    
+    JSR     PRINT_SPACE         *Prints a space to the output window.
 
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_ADD_EA_DN
+    JSR     VALID_MODE_1
+    
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    MOVE.W  D4,D1
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
 
+    JSR     PRINT_A
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+    MOVE.W  D4,D1
+    JMP     RELOOP
     
 OPMODE_ADD_EA_DN_TEST_LONG
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
@@ -1951,6 +2019,36 @@ OPMODE_ADD_EA_DN_TEST_LONG
     MOVE.W  D1,D5
     
     JSR     PRINT_D
+    
+    MOVE.B   D5,D1
+    MOVE.B   #3,D0
+    TRAP     #15
+    MOVE.W  D4,D1
+    JMP     RELOOP
+    
+OPMODE_ADD_EA_AN_TEST_LONG
+    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
+    JSR     PRINT_L                  *Prints a L to the output window.
+    
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    MOVE.W  D4,D1
+
+    BTST    #5,D1
+    
+    BEQ     VALID_MODE_0_ADD_EA_DN
+    JSR     VALID_MODE_1
+    
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    MOVE.W  D4,D1
+    
+    MOVE.B  #20,D2
+    MOVE.B  D1,D4
+    LSL.L   D2,D1
+    MOVE.B  #29,D2
+    LSR.L   D2,D1
+    MOVE.W  D1,D5
+    
+    JSR     PRINT_A
     
     MOVE.B   D5,D1
     MOVE.B   #3,D0
@@ -2991,6 +3089,7 @@ SUB_MESS        DC.B    'SUB.',0
 DIVU_MESS       DC.B    'DIVU.',0
 OR_MESS         DC.B    'OR.',0
 CMP_MESS        DC.B    'CMP.',0
+CMPA_MESS        DC.B    'CMPA.',0
 ADD_MESS        DC.B    'ADD.',0
 ADDA_MESS       DC.B    'ADDA.',0
 MULS_MESS       DC.B    'MULS.',0
@@ -3049,6 +3148,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 
