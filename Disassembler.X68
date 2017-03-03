@@ -146,26 +146,26 @@ MOVE_PRINT_IMMED_ADDR_MODE_111
     JMP     MOVE_PRINT_DESTINATION
 MOVE_PRINT_IMMED_ADDR
     BTST    #5,D1                           *Test to make sure the mode is 111, if it is then we need to pop from the address.
-    BEQ     RTS
+    BEQ     MOVE_RTS
     BTST    #4,D1
-    BEQ     RTS
+    BEQ     MOVE_RTS
     BTST    #3,D1
-    BEQ     RTS
+    BEQ     MOVE_RTS
     BTST    #2,D1
-    BEQ     RTS
+    BEQ     MOVE_RTS
     BTST    #12,D1                          *Test if it is a long, if so pop one more word
     BEQ   MOVE_PRINT_IMMED_ADDR_LONG
     
     RTS
 MOVE_PRINT_IMMED_ADDR_LONG
     BTST    #5,D1
-    BEQ     RTS
+    BEQ     MOVE_RTS
     BTST    #4,D1
-    BEQ     RTS
+    BEQ     MOVE_RTS
     BTST    #3,D1
-    BEQ     RTS
+    BEQ     MOVE_RTS
     BTST    #2,D1
-    BEQ     RTS
+    BEQ     MOVE_RTS
 
     CMP.W   #0,D6            *Compare to 0, if it is 0, print 0000
     BEQ     PRINT_0000_RTS
@@ -179,6 +179,8 @@ MOVE_PRINT_IMMED_ADDR_LONG
 
     RTS
 
+MOVE_RTS
+    RTS
 PRINT_ADDR_MODE_SIZE_BIT_13    
     MOVE.L  D1,D4
     BTST    #13,D1
@@ -2787,7 +2789,10 @@ NUMBER        CMP.B     #$0039,D0
               SUB.B     #4,D2
               BRA       CONVERTSTRING
               
-STRINGEND     RTS 
+STRINGEND     
+            ADD.B       #4,D2
+            LSR.L       D2,D3
+            RTS 
 
 REMOVE_ZEROS_START                      ;Used by Output Hexadecimal. Assumes value isn't zero, because that subroutine checks if it is.
              MOVE.L     D5,-(SP)        ;Restoring the values stored in the Stack
@@ -3148,6 +3153,8 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
+
 
 
 
