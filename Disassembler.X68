@@ -63,6 +63,13 @@ ENDMESSAGE
 CALL_ONE_PAGE_PRINTED
     JSR     ONE_PAGE_PRINTED             
 RELOOP
+    CLR.L   D1
+    CLR.L   D2
+    CLR.L   D3
+    CLR.L   D4
+    CLR.L   D5
+    CLR.L   D6
+    CLR.L   D7
     CMPA.W  #PAGE_SIZE,A6
     BEQ     CALL_ONE_PAGE_PRINTED
     ADD    #1,A6
@@ -122,14 +129,12 @@ VALID_MODE_SOURCE_DEST_1_JSR
     
 MOVE_VALID_MODE_1_JSR
     JSR     VALID_MODE_1
-    BTST    #5,D1
-    BNE     MOVE_PRINT_IMMED_ADDR_11
+    *BTST    #5,D1
+    *BNE     MOVE_PRINT_IMMED_ADDR_11
     JMP     MOVE_PRINT_DESTINATION
 
 MOVE_PRINT_DESTINATION
-    CLR.L   D1
     JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.B  D4,D1
 
     BTST    #8,D1                           *Test the destination mode
     BNE     VALID_MODE_SOURCE_DEST_1_JSR    
@@ -166,9 +171,6 @@ MOVE_PRINT_IMMED_ADDR_LONG
     BEQ     MOVE_RTS
     BTST    #2,D1
     BEQ     MOVE_RTS
-
-    CMP.W   #0,D6            *Compare to 0, if it is 0, print 0000
-    BEQ     PRINT_0000_RTS
     
     *MOVE.L  D6,D1
     *MOVE.B  #15,D0        *Sets the trap task to print out in hexadecimal
@@ -229,19 +231,18 @@ ADDI_SECT                   *Outputs the message 'ADDI.'.
     LEA     ADDI_MESS,A1 
     MOVE.B  #14,D0      
     TRAP    #15
-  
     
     JSR     ADD_SIZE  
     JSR     PRINT_SPACE         *Prints a space to the output window.
     JSR     PRINT_POUND         *Prints a # to the output window.  
-    
+    JSR     PRINT_$
+    MOVE.L  D1,D4
 
-    MOVE.L  D6,D1
-    MOVE.B  #3,D0
-    TRAP    #15
+    MOVE.L  D6,D2
+    JSR     OUTPUT_HEXADECIMAL
 
     JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.B  D4,D1
+    MOVE.L  D4,D1
     BTST    #5,D1
     BNE     VALID_MODE_1_JSR
     JSR     VALID_MODE_0
@@ -706,6 +707,15 @@ LSL_LSR_PRINT_IMMED_LONG
     JSR     PRINT_POUND         *Prints a # to the output window.
 
     MOVE.L  D4,D1
+    CLR.L   D6
+    MOVE.B  #20,D6
+    LSL.L   D6,D1
+    CLR.L   D6
+    MOVE.B  #29,D6
+    LSR.L   D6,D1
+    
+    CMP     #0,D1
+    BEQ     LSL_LSR_PRINT_IMMED_8
     
     JSR     LSL_LSR_PRINT_Dy
     JMP     RELOOP
@@ -757,6 +767,7 @@ LSL_LSR_PRINT_IMMED_8
     MOVE.B  #'8',D1
     MOVE.B  #6,D0
     TRAP    #15
+    BRA     LSL_LSR_AFTER_PRINT
     JMP     RELOOP
     
 LSL_LSR_PRINT_Dy
@@ -771,7 +782,7 @@ LSL_LSR_PRINT_Dy
     
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15 
-
+LSL_LSR_AFTER_PRINT
     JSR     PRINT_COMMA         *Prints a comma to the output window.
     JSR     PRINT_D
     
@@ -930,12 +941,16 @@ ADDA_VALID_SECT
     
     
 ADDA_IMMEDIATE_ADDR_TEST
+    MOVE.L  D1,D4
     BTST    #5,D1                           *Test if the first digit is 1
     BEQ     ADDA_RETURN
     BTST    #4,D1                           *Test if the second digit is 1
     BEQ     ADDA_RETURN
     BTST    #3,D1                           *Test if the third digit is 1 
-    BEQ     ADDA_RETURN                     
+    BEQ     ADDA_RETURN  
+
+    BTST    #2,D1
+    BEQ     ADDA_PRINT_ADDRESS                 
     
     *If test cases pass, then the mode = 111 and we need to pop a word or long based on the opcode
     
@@ -952,9 +967,22 @@ ADDA_IMMEDIATE_ADDR_TEST
     MOVE.L  D6,D1
     MOVE.L  D1,D2                    
     JSR     OUTPUT_HEXADECIMAL
+    MOVE.L  D4,D1
     
     JMP     ADDA_PRINT_An   
-    
+
+ADDA_PRINT_ADDRESS
+    JSR     PRINT_$
+    BTST    #0,D1
+    BNE     ADDA_PRINT_LONG_ADDRESS
+ADDA_PRINT_WORD_ADDRESS
+    MOVE.W  (A2)+,D2               *This gets the remaining word from the function
+    JSR     OUTPUT_HEXADECIMAL
+    BRA     ADDA_PRINT_AN
+ADDA_PRINT_LONG_ADDRESS
+    MOVE.L  (A2)+,D2               *This gets the remaining Long from the function
+    JSR     OUTPUT_HEXADECIMAL
+    BRA     ADDA_PRINT_AN
     
 ADDA_IMMEDIATE_WORD
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
@@ -962,13 +990,14 @@ ADDA_IMMEDIATE_WORD
     MOVE.L  D1,D4                           *Copy the bits to D4, because we are going to print and need to use D1
     MOVE.L  D6,D1
     CLR.L   D2
-    MOVE.L  D1,D2                    
+    MOVE.L  D1,D2  
+    MOVE.L  D4,D1                  
     JSR     OUTPUT_HEXADECIMAL
 
 ADDA_PRINT_An
     JSR     PRINT_COMMA                     *Prints a comma to the output window.
     JSR     PRINT_A                         *Prints an A to the output window.
-    MOVE.L  D4,D1                           *Move orginial opcode back into D1
+    MOVE.L  D1,D4
     
     CLR.L   D6
     MOVE.B  #20,D6
@@ -979,13 +1008,14 @@ ADDA_PRINT_An
     
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
-    
+    MOVE.L  D4,D1
     RTS                                     *Return from sub-routine
  
 ADDA_RETURN
     BTST    #5,D1    
     BEQ     ADDA_VALID_MODE_0_JSR
     JSR     VALID_MODE_1
+    BRA     ADDA_PRINT_An
     
     RTS     
 ADDA_VALID_MODE_0_JSR
@@ -1137,6 +1167,7 @@ MOVEA_IMMEDIATE_ADDR_TEST
     
     MOVE.L  D1,D2                    
     JSR     OUTPUT_HEXADECIMAL
+    MOVE.L  D4,D1
     
     JMP     MOVEA_PRINT_An   
     
@@ -1148,12 +1179,12 @@ MOVEA_IMMEDIATE_WORD
     MOVE.L  D6,D1
     MOVE.L  D1,D2                    
     JSR     OUTPUT_HEXADECIMAL
+    MOVE.L  D4,D1
 
 
 MOVEA_PRINT_An
     JSR     PRINT_COMMA         *Prints a comma to the output window.
     JSR     PRINT_A                         *Prints an A to the output window.
-    MOVE.L  D4,D1                           *Move orginial opcode back into D1
     
     CLR.L   D6
     MOVE.B  #20,D6
@@ -1177,8 +1208,8 @@ MOVEA_VALID_MODE_0_JSR
     JMP     MOVEA_PRINT_An
     RTS
 MOVEA_PRINT_OPMODE
-    BTST    #8,D1
-    BNE     MOVEA_PRINT_LONG
+    BTST    #12,D1
+    BEQ     MOVEA_PRINT_LONG
     JSR     PRINT_W                  *Prints a W to the output window.
     JSR     PRINT_SPACE         *Prints a space to the output window.
     RTS
@@ -1569,7 +1600,6 @@ LEA_SECT
 LEA_PRINT_IMMED_ADDR_LONG
     MOVE.W  (A2)+,D6         *Get the remaining word
     CMP.W   #0,D6            *Compare to 0, if it is 0, print 0000
-    BEQ     PRINT_0000_RTS
     
     MOVE.L  D6,D1
     MOVE.L  D1,D2                    
@@ -1615,15 +1645,12 @@ MOVEQ_SECT
     MOVE.B  #14,D0      
     TRAP    #15
     
-   
-    JMP     MOVEQ_PRINT
-    
-    
 MOVEQ_PRINT
     MOVE.L  D1,D4
+    JSR     PRINT_SPACE
     JSR     PRINT_POUND         *Prints a # to the output window.
+    JSR     PRINT_$             *Prints a $ to the output window.
     
-    MOVE.L  D4,D1
     CLR.L   D6
     MOVE.B  #24,D6
     LSL.L   D6,D1
@@ -1631,9 +1658,8 @@ MOVEQ_PRINT
     MOVE.B  #24,D6
     LSR.L   D6,D1
     
-  
-    MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
-    TRAP    #15
+    MOVE.L  D1,D2
+    JSR     OUTPUT_HEXADECIMAL
     
     JSR     PRINT_COMMA         *Prints a comma to the output window.
     JSR     PRINT_D
@@ -1650,66 +1676,6 @@ MOVEQ_PRINT
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
     
-    JMP     RELOOP
-
-
-OPMODE_MULS_EA_DN_TEST_WORD
-    MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
-    JSR     PRINT_W                  *Prints a W to the output window.
-    
-    JSR     PRINT_SPACE         *Prints a space to the output window.
-    MOVE.W  D4,D1
-
-    BTST    #5,D1
-    
-    BEQ     VALID_MODE_0_MULS_EA_DN
-    JSR     VALID_MODE_1
-    
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-    
-    MOVE.B  #20,D2
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-
-    JSR     PRINT_D
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-    MOVE.W  D4,D1
-    JMP     RELOOP
-    
-OPMODE_MULS_EA_DN_TEST_LONG
-    JSR     PRINT_L                  *Prints a L to the output window.
-    JSR     PRINT_SPACE         *Prints a space to the output window.
-
-
-    MOVE.B  #20,D2                      
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-
-    JSR     PRINT_D
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-
-    BTST    #5,D1
-    
-    BEQ     VALID_MODE_0_MULS_EA_DN
-    JSR     VALID_MODE_1
-    
-    MOVE.W  D4,D1
     JMP     RELOOP
 
 MULS_SECT
@@ -1729,20 +1695,141 @@ MULS_SECT
     JMP     RELOOP
     
 PRINT_OPMODE_MULS_EA_DN
-    BTST    #7,D1
-    BNE     OPMODE_MULS_EA_DN_TEST_WORD
-    JMP     OPMODE_MULS_EA_DN_TEST_LONG
-
-
-VALID_MODE_0_MULS_EA_DN
-    JSR     VALID_MODE_0
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
+    JSR     PRINT_W                  *Prints a W to the output window.
+    JSR     PRINT_SPACE         *Prints a space to the output window.
+    JSR     PRINT_EA_SOURCE
     
+    JSR     PRINT_COMMA         *Prints a comma to the output window.
     JSR     PRINT_D
-    MOVE.W  D4,D1
     JSR     DN_REGISTER
-    JMP     RELOOP
+    RTS
 
+PRINT_EA_SOURCE_OPMODE
+    MOVE.W  D1,D2
+    AND.W   #%111100,D2
+    CMP.W   #%111100,D2
+    BNE     PRINT_EA_SOURCE
+PRINT_EA_SOURCE_OPMODE_IMMEDIATE
+    MOVEM.L D1-D2/D6,-(SP)
+    BTST    #7,D1
+    BNE     PRINT_IMMEDIATE_DATA_LONG
+    BRA     PRINT_IMMEDIATE_DATA_WORD
+PRINT_EA_SOURCE
+    MOVEM.L D1-D2/D6,-(SP)
+    BTST    #5,D1
+    BNE     PRINT_EA_SOURCE_1
+
+PRINT_EA_SOURCE_0
+    BTST    #4,D1
+    BNE     PRINT_EA_SOURCE_01
+    
+PRINT_EA_SOURCE_00
+    BTST    #3,D1
+    BNE     PRINT_EA_SOURCE_001
+PRINT_EA_SOURCE_000
+PRINT_DN
+    JSR     PRINT_D
+    MOVE.L  #29,D6
+    LSL.L   D6,D1
+    LSR.L   D6,D1
+    MOVE.L  D1,D2
+    JSR     OUTPUT_HEXADECIMAL
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_EA_SOURCE_001
+PRINT_AN
+    JSR     PRINT_A
+    MOVE.L  #29,D6
+    LSL.L   D6,D1
+    LSR.L   D6,D1
+    MOVE.L  D1,D2
+    JSR     OUTPUT_HEXADECIMAL
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS    
+PRINT_EA_SOURCE_01
+    BTST    #3,D1
+    BNE     PRINT_EA_SOURCE_011
+PRINT_EA_SOURCE_010
+PRINT_AN_INDIRECT
+    JSR     PRINT_OPEN_PAREN
+    JSR     PRINT_A
+    MOVE.L  #29,D6
+    LSL.L   D6,D1
+    LSR.L   D6,D1
+    MOVE.L  D1,D2
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_CLOSE_PAREN
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_EA_SOURCE_011
+PRINT_AN_PLUS
+    JSR     PRINT_OPEN_PAREN
+    JSR     PRINT_A
+    MOVE.L  #29,D6
+    LSL.L   D6,D1
+    LSR.L   D6,D1
+    MOVE.L  D1,D2
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_CLOSE_PAREN
+    JSR     PRINT_PLUS
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_EA_SOURCE_1
+    BTST    #4,D1
+    BNE     PRINT_EA_SOURCE_11
+PRINT_EA_SOURCE_10
+    BTST    #3,D1
+    BNE     PRINT_EA_SOURCE_INVALID
+PRINT_EA_SOURCE_100
+PRINT_MINUS_AN
+    JSR     PRINT_MINUS
+    JSR     PRINT_OPEN_PAREN
+    JSR     PRINT_A
+    MOVE.L  #29,D6
+    LSL.L   D6,D1
+    LSR.L   D6,D1
+    MOVE.L  D1,D2
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_CLOSE_PAREN
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_EA_SOURCE_11
+PRINT_EA_SOURCE_111
+    BTST    #2,D1
+    BNE     PRINT_IMMEDIATE_DATA_WORD
+    BTST    #0,D1
+    BNE     PRINT_LONG_ADDRESS
+PRINT_WORD_ADDRESS
+    JSR     PRINT_$
+    MOVE.W  (A2)+,D2
+    JSR     OUTPUT_HEXADECIMAL
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_LONG_ADDRESS
+    JSR     PRINT_$
+    MOVE.L  (A2)+,D2
+    JSR     OUTPUT_HEXADECIMAL
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_IMMEDIATE_DATA_WORD
+    JSR     PRINT_POUND
+    JSR     PRINT_$
+    MOVE.W  (A2)+,D2
+    JSR     OUTPUT_HEXADECIMAL
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_IMMEDIATE_DATA_LONG
+    JSR     PRINT_POUND
+    JSR     PRINT_$
+    MOVE.L  (A2)+,D2
+    JSR     OUTPUT_HEXADECIMAL
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+PRINT_EA_SOURCE_INVALID
+    JSR     PRINT_INVALID_OPCODE
+    MOVEM.L (SP)+,D1-D2/D6
+    RTS
+   
 LSL_REG_SECT                    *Output the message 'LSL.'.
     LEA     LSL_MESS,A1
     MOVE.B  #14,D0      
@@ -1893,25 +1980,25 @@ OPMODE_ADD_EA_DN_TEST_WORD
     JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.W  D4,D1
     BTST    #5,D1
-    BEQ     VALID_MODE_0_ADD_EA_DN
-    JSR     VALID_MODE_1
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-    
-    MOVE.B  #20,D2
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-
-    JSR     PRINT_D
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-    MOVE.W  D4,D1
-    JMP     RELOOP
+    BRA     VALID_MODE_ADD_EA_DN
+*    JSR     VALID_MODE_1
+*    JSR     PRINT_COMMA         *Prints a comma to the output window.
+*    MOVE.W  D4,D1
+*    
+*    MOVE.B  #20,D2
+*    MOVE.B  D1,D4
+*    LSL.L   D2,D1
+*    MOVE.B  #29,D2
+*    LSR.L   D2,D1
+*    MOVE.W  D1,D5
+*
+*    JSR     PRINT_D
+*    
+*    MOVE.B   D5,D1
+*    MOVE.B   #3,D0
+*    TRAP     #15
+*    MOVE.W  D4,D1
+*    JMP     RELOOP
     
 OPMODE_ADD_EA_AN_TEST_WORD
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
@@ -1919,25 +2006,25 @@ OPMODE_ADD_EA_AN_TEST_WORD
     JSR     PRINT_SPACE         *Prints a space to the output window.
     MOVE.W  D4,D1
     BTST    #5,D1
-    BEQ     VALID_MODE_0_ADD_EA_DN
-    JSR     VALID_MODE_1
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-    
-    MOVE.B  #20,D2
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-
-    JSR     PRINT_A
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-    MOVE.W  D4,D1
-    JMP     RELOOP
+    BRA     VALID_MODE_ADD_EA_DN
+*    JSR     VALID_MODE_1
+*    JSR     PRINT_COMMA         *Prints a comma to the output window.
+*    MOVE.W  D4,D1
+*    
+*    MOVE.B  #20,D2
+*    MOVE.B  D1,D4
+*    LSL.L   D2,D1
+*    MOVE.B  #29,D2
+*    LSR.L   D2,D1
+*    MOVE.W  D1,D5
+*
+*    JSR     PRINT_A
+*    
+*    MOVE.B   D5,D1
+*    MOVE.B   #3,D0
+*    TRAP     #15
+*    MOVE.W  D4,D1
+*    JMP     RELOOP
 
 
 OPMODE_ADD_EA_DN_TEST_BYTE
@@ -1948,26 +2035,26 @@ OPMODE_ADD_EA_DN_TEST_BYTE
 
     BTST    #5,D1
     
-    BEQ     VALID_MODE_0_ADD_EA_DN
-    JSR     VALID_MODE_1
-    
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-    
-    MOVE.B  #20,D2
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-
-    JSR     PRINT_D
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-    MOVE.W  D4,D1
-    JMP     RELOOP
+    BRA     VALID_MODE_ADD_EA_DN
+*    JSR     VALID_MODE_1
+*    
+*    JSR     PRINT_COMMA         *Prints a comma to the output window.
+*    MOVE.W  D4,D1
+*    
+*    MOVE.B  #20,D2
+*    MOVE.B  D1,D4
+*    LSL.L   D2,D1
+*    MOVE.B  #29,D2
+*    LSR.L   D2,D1
+*    MOVE.W  D1,D5
+*
+*    JSR     PRINT_D
+*    
+*    MOVE.B   D5,D1
+*    MOVE.B   #3,D0
+*    TRAP     #15
+*    MOVE.W  D4,D1
+*    JMP     RELOOP
     
 OPMODE_ADD_EA_AN_TEST_BYTE
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
@@ -1977,26 +2064,26 @@ OPMODE_ADD_EA_AN_TEST_BYTE
 
     BTST    #5,D1
     
-    BEQ     VALID_MODE_0_ADD_EA_DN
-    JSR     VALID_MODE_1
-    
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-    
-    MOVE.B  #20,D2
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-
-    JSR     PRINT_A
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-    MOVE.W  D4,D1
-    JMP     RELOOP
+    BRA     VALID_MODE_ADD_EA_DN
+*    JSR     VALID_MODE_1
+*    
+*    JSR     PRINT_COMMA         *Prints a comma to the output window.
+*    MOVE.W  D4,D1
+*    
+*    MOVE.B  #20,D2
+*    MOVE.B  D1,D4
+*    LSL.L   D2,D1
+*    MOVE.B  #29,D2
+*    LSR.L   D2,D1
+*    MOVE.W  D1,D5
+*
+*    JSR     PRINT_A
+*    
+*    MOVE.B   D5,D1
+*    MOVE.B   #3,D0
+*    TRAP     #15
+*    MOVE.W  D4,D1
+*    JMP     RELOOP
     
 OPMODE_ADD_EA_DN_TEST_LONG
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
@@ -2007,26 +2094,26 @@ OPMODE_ADD_EA_DN_TEST_LONG
 
     BTST    #5,D1
     
-    BEQ     VALID_MODE_0_ADD_EA_DN
-    JSR     VALID_MODE_1
-    
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-    
-    MOVE.B  #20,D2
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-    
-    JSR     PRINT_D
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-    MOVE.W  D4,D1
-    JMP     RELOOP
+    BRA     VALID_MODE_ADD_EA_DN
+*    JSR     VALID_MODE_1
+*    
+*    JSR     PRINT_COMMA         *Prints a comma to the output window.
+*    MOVE.W  D4,D1
+*    
+*    MOVE.B  #20,D2
+*    MOVE.B  D1,D4
+*    LSL.L   D2,D1
+*    MOVE.B  #29,D2
+*    LSR.L   D2,D1
+*    MOVE.W  D1,D5
+*    
+*    JSR     PRINT_D
+*    
+*    MOVE.B   D5,D1
+*    MOVE.B   #3,D0
+*    TRAP     #15
+*    MOVE.W  D4,D1
+*    JMP     RELOOP
     
 OPMODE_ADD_EA_AN_TEST_LONG
     MOVE.W  D1,D4                               *Copy to D4 because D1 will be manipulated
@@ -2037,31 +2124,35 @@ OPMODE_ADD_EA_AN_TEST_LONG
 
     BTST    #5,D1
     
-    BEQ     VALID_MODE_0_ADD_EA_DN
-    JSR     VALID_MODE_1
-    
-    JSR     PRINT_COMMA         *Prints a comma to the output window.
-    MOVE.W  D4,D1
-    
-    MOVE.B  #20,D2
-    MOVE.B  D1,D4
-    LSL.L   D2,D1
-    MOVE.B  #29,D2
-    LSR.L   D2,D1
-    MOVE.W  D1,D5
-    
-    JSR     PRINT_A
-    
-    MOVE.B   D5,D1
-    MOVE.B   #3,D0
-    TRAP     #15
-    MOVE.W  D4,D1
-    JMP     RELOOP
+    BRA     VALID_MODE_ADD_EA_DN
+*    JSR     VALID_MODE_1
+*    
+*    JSR     PRINT_COMMA         *Prints a comma to the output window.
+*    MOVE.W  D4,D1
+*    
+*    MOVE.B  #20,D2
+*    MOVE.B  D1,D4
+*    LSL.L   D2,D1
+*    MOVE.B  #29,D2
+*    LSR.L   D2,D1
+*    MOVE.W  D1,D5
+*    
+*    JSR     PRINT_A
+*    
+*    MOVE.B   D5,D1
+*    MOVE.B   #3,D0
+*    TRAP     #15
+*    MOVE.W  D4,D1
+*    JMP     RELOOP
 
-VALID_MODE_0_ADD_EA_DN
-    JSR     VALID_MODE_0
+VALID_MODE_ADD_EA_DN
+    CLR.L   D2
+    MOVE.W  D1,D2
+    AND.W   #%111000000,D2
+    LSR.W   #6,D2
+    CMP.B   #1,D2
+    JSR     PRINT_EA_SOURCE_OPMODE
     JSR     PRINT_COMMA         *Prints a comma to the output window.
-    
     JSR     PRINT_D
     MOVE.W  D4,D1
     JSR     DN_REGISTER
@@ -2280,10 +2371,10 @@ VALIDATE_OPMODE_FIELD
 *Absolute Word Address                              %10000000
 DEST_EFF_ADDR_MODE_REG      *Modifies D2 and D3. 
     BTST    #8,D1
-    BNE     SRC_MODE_1
+    BNE     DEST_MODE_1
 DEST_MODE_0  *Possibilities are Dn, An, (An), (AN)+
     BTST    #7,D1
-    BNE     SRC_MODE_01
+    BNE     DEST_MODE_01
 DEST_MODE_00     *Possibilities are Dn, An
     BTST    #6,D1
     BNE     MODE_ADDR_DIRECT
@@ -2527,11 +2618,12 @@ VALID_MODE_11
     MOVE.W  D4,D1                    *Copy original values back into D1
     MOVEM.L (SP)+,D0-D7
     RTS
-    
 VALID_MODE_111_POUND
     JSR     PRINT_POUND         *Prints a # to the output window.
     JSR     PRINT_$             *Prints a $ to the output window.
     MOVE.W  D4,D1
+    BTST    #12,D1
+    BEQ     VALID_MODE_111_LONG
     MOVE.W  (A2)+,D6               *This gets the remaining word from the function
     
     CMP.W   #0,D6
@@ -2546,6 +2638,8 @@ VALID_MODE_111_POUND
     MOVEM.L (SP)+,D0-D7
     RTS
 RTS
+    MOVE.L  D6,D2
+    JSR     OUTPUT_HEXADECIMAL
     MOVEM.L (SP)+,D0-D7
     RTS
 VALID_MODE_111_LONG
@@ -2558,16 +2652,6 @@ VALID_MODE_111_LONG
     MOVEM.L (SP)+,D0-D7
     RTS
     
-PRINT_0000_RTS
-    MOVE.L  D1,-(SP)
-    MOVE.B  #'0',D1
-    MOVE.B  #6,D0
-    TRAP    #15
-    TRAP    #15
-    TRAP    #15
-    TRAP    #15
-    MOVE.L  (SP)+,D1
-    RTS
 VALID_MODE_0                         *Options are Dn, (An), or (An)+
     MOVEM.L D0-D7,-(SP)
     MOVE.W  D1,D4
@@ -2636,8 +2720,9 @@ VALID_MODE_SOURCE_DEST_1     *Options here are
     
     MOVE.W  D4,D1                    *Copy original values back into D1
               
-    MOVE.B  #29,D6                   *Set the bit shift to 29 so we can isolate the register number 
-    LSL.L   D6,D1                    
+    MOVE.B  #20,D6                   *Set the bit shift to 29 so we can isolate the register number 
+    LSL.L   D6,D1 
+    MOVE.B  #29,D6                   
     LSR.L   D6,D1
     MOVE.B  #3,D0                   *Move trap task  #15 to convert to decimal and print  
     TRAP    #15
@@ -3153,6 +3238,11 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
+
+
+
+
 
 
 
