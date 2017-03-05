@@ -1310,96 +1310,232 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     JSR     TEST_LONG_WORD
     JSR     CHECK_ADDR_MODE
     
-    BTST    #0,D7
-    BNE     MOVEM_PRINT_LIST_REVERSE_REG_MEM
-    BEQ     MOVEM_PRINT_LIST_REG_MEM
+    BRA     MOVEM_PRINT_LIST_REVERSE
 MOVEM_REG_PRINT_SECOND
     JSR     JSR_COMMA
     BTST    #5,D1
     BEQ     VALID_MODE_0_MOVEM_REG_MEM_JSR    
     JSR     VALID_MODE_1    
     JMP     RELOOP
-
-MOVEM_PRINT_LIST_REVERSE_REG_MEM
-    JSR     MOVEM_PRINT_LIST_REVERSE
-    JMP     MOVEM_REG_PRINT_SECOND
-
-MOVEM_PRINT_LIST_REG_MEM
-    JSR     MOVEM_PRINT_LIST
-    JMP     MOVEM_REG_PRINT_SECOND
     
 MOVEM_PRINT_LIST_REVERSE
-    CLR.L   D5
-    CLR.L   D7
-    MOVE.L  #15,D5
-    MOVE.L  #0,D7
-        
-    JSR     MOVEM_PRINT_LIST_REVERSE_LOOP
-    RTS
-    
-MOVEM_PRINT_LIST_REVERSE_LOOP
-    
-    BTST    D5,D6
-    BNE     MOVEM_PRINT_REVERSE_END
-    SUB.B   #1,D5
-    JMP     MOVEM_PRINT_LIST_REVERSE_LOOP
-    RTS
-    
-MOVEM_PRINT_LIST_LOOP    
-    BTST    D5,D6
-    BNE     MOVEM_PRINT_END
-    SUB.B   #1,D5
-    JMP     MOVEM_PRINT_LIST_LOOP
-    RTS
+    MOVEM.L D0-D7,-(SP)
+    MOVE.L  #16,D3
+    JSR     PRINT_REGISTERS_REVERSE
+    MOVEM.L (SP)+,D0-D7
+    BRA     MOVEM_REG_PRINT_SECOND
 
 MOVEM_PRINT_LIST
-    *MOVE.L  #15,D6
-    JSR     MOVEM_PRINT_LOOP
+    MOVEM.L D0-D7,-(SP)
+    MOVE.L  #16,D3
+    JSR     PRINT_REGISTERS_FORWARDS
+    MOVEM.L (SP)+,D0-D7
+    RTS
+
+PRINT_REGISTERS_FORWARDS
+    JSR     FIND_SET_INDEX
+    CMP.L   #0,D3
+    BLT     PRINT_INVALID_OPCODE
+    MOVE.L  D3,D7
+    JSR     FIND_SET_INDEX_LIST
+    ADD.L   #1,D3
+    CMP.L   D7,D3
+    BEQ     PRINT_SINGULAR_FORWARDS
+    JSR     PRINT_RANGE_FORWARDS 
+AFTER_START_FORWARDS
+    JSR     FIND_SET_INDEX
+    CMP.L   #0,D3
+    BEQ     PRINT_SINGULAR_FORWARDS_END
+    BLT     AFTER_END
+    JSR     PRINT_SLASH
+    MOVE.L  D3,D7
+    JSR     FIND_SET_INDEX_LIST
+    ADD.L   #1,D3
+    CMP.L   D7,D3
+    BEQ     PRINT_SINGULAR_FORWARDS
+    JSR     PRINT_RANGE_FORWARDS
+    CMP.L   #0,D3
+    BGT     AFTER_START_FORWARDS
+    BRA     AFTER_END 
+
+PRINT_REGISTERS_REVERSE
+    JSR     FIND_SET_INDEX
+    CMP.L   #0,D3
+    BLT     PRINT_INVALID_OPCODE
+    MOVE.L  D3,D7
+    JSR     FIND_SET_INDEX_LIST
+    ADD.L   #1,D3
+    CMP.L   D7,D3
+    BEQ     PRINT_SINGULAR_REVERSE
+    JSR     PRINT_RANGE_REVERSE 
+AFTER_START_REVERSE
+    JSR     FIND_SET_INDEX
+    CMP.L   #0,D3
+    BEQ     PRINT_SINGULAR_REVERSE_END
+    BLT     AFTER_END
+    JSR     PRINT_SLASH
+    MOVE.L  D3,D7
+    JSR     FIND_SET_INDEX_LIST
+    ADD.L   #1,D3
+    CMP.L   D7,D3
+    BEQ     PRINT_SINGULAR_REVERSE
+    JSR     PRINT_RANGE_REVERSE
+    CMP.L   #0,D3
+    BGT     AFTER_START_REVERSE
+AFTER_END
+    RTS
+   
+PRINT_RANGE_FORWARDS    *Prints registers in the format An-Am, Dn-Dm, or An-Dm.
+    CMP.L   #8,D7
+    BLT     D_RANGE_FORWARDS
+A_RANGE_FORWARDS
+    JSR     PRINT_A
+    MOVE.L  D7,D2
+    SUB.L   #8,D2
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_MINUS
+    JSR     PRINT_SECOND_PART_FORWARD
+    RTS
+D_RANGE_FORWARDS
+    JSR     PRINT_D
+    MOVE.L  D7,D2
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_MINUS
+    JSR     PRINT_D
+    MOVE.L  D3,D2
+    JSR     OUTPUT_HEXADECIMAL
+    RTS
+PRINT_SECOND_PART_FORWARD
+    CMP.L   #8,D3
+    BLT     D_RANGE_SECOND_FORWARD
+A_RANGE_SECOND_FORWARD
+    JSR     PRINT_A
+    MOVE.L  D3,D2
+    SUB.L   #8,D2
+    JSR     OUTPUT_HEXADECIMAL
+    RTS
+D_RANGE_SECOND_FORWARD
+    JSR     PRINT_D
+    MOVE.L  D3,D2
+    JSR     OUTPUT_HEXADECIMAL
     RTS
     
-MOVEM_PRINT_LOOP
-    *CLR.L   D6
-    CLR.L   D5
-    CLR.L   D7
-    MOVE.L  #15,D5
-    MOVE.L  #0,D7
-    *MOVE.W  (A2)+,D6         *Get the remaining word    
-    *JSR     JSR_COMMA
-    JSR     MOVEM_PRINT_LIST_LOOP            
-*    BTST    #5,D1
-*    BEQ     VALID_MODE_0_JSR 
-*    
-*    JSR     VALID_MODE_1
-*    JMP     RELOOP
+PRINT_RANGE_REVERSE    *Prints registers in the format An-Am, Dn-Dm, or An-Dm.
+    CMP.L   #8,D7
+    BGE     D_RANGE_REVERSE
+A_RANGE_REVERSE
+    JSR     PRINT_A
+    MOVE.L  #7,D2
+    SUB.L   D7,D2
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_MINUS
+    JSR     PRINT_SECOND_PART_REVERSE
+    RTS
+D_RANGE_REVERSE
+    JSR     PRINT_D
+    MOVE.L  #15,D2
+    SUB.L   D7,D2
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_MINUS
+    JSR     PRINT_D
+    MOVE.L  #15,D2
+    SUB.L   D3,D2
+    JSR     OUTPUT_HEXADECIMAL
+    RTS
+PRINT_SECOND_PART_REVERSE
+    CMP.L   #8,D3
+    BGE     D_RANGE_SECOND_REVERSE
+A_RANGE_SECOND_REVERSE
+    JSR     PRINT_A
+    MOVE.L  #7,D2
+    SUB.L   D3,D2
+    JSR     OUTPUT_HEXADECIMAL
+    RTS
+D_RANGE_SECOND_REVERSE
+    JSR     PRINT_D
+    MOVE.L  #15,D2
+    SUB.L   #8,D2
+    JSR     OUTPUT_HEXADECIMAL
+    RTS
+
+PRINT_SINGULAR_REVERSE
+    CMP.L   #8,D7
+    BGE     PRINT_D_D7_REVERSE
+    BRA     PRINT_A_D7_REVERSE
+PRINT_SINGULAR_FORWARDS     *Prints the single register that was being moved.
+    CMP.L   #8,D7
+    BLT     PRINT_D_D7_FORWARDS
+    BRA     PRINT_A_D7_FORWARDS
+
+PRINT_D_D7_REVERSE
+    JSR     PRINT_D
+    MOVE.L  #15,D2
+    SUB.L   D7,D2
+    JSR     OUTPUT_HEXADECIMAL
+    BRA     AFTER_START_REVERSE
+
+PRINT_A_D7_REVERSE
+    JSR     PRINT_A
+    MOVE.L  #7,D2
+    SUB.L   D7,D2
+    JSR     OUTPUT_HEXADECIMAL
+    BRA     AFTER_START_REVERSE
+    
+PRINT_D_D7_FORWARDS
+    JSR     PRINT_D
+    MOVE.L  D7,D2
+    JSR     OUTPUT_HEXADECIMAL
+    BRA     AFTER_START_FORWARDS
+
+PRINT_A_D7_FORWARDS
+    JSR     PRINT_A
+    MOVE.L  D7,D2
+    SUB.L   #8,D2
+    JSR     OUTPUT_HEXADECIMAL
+    BRA     AFTER_START_FORWARDS
+    
+PRINT_SINGULAR_FORWARDS_END     *Prints the single register that was being moved.
+    JSR     PRINT_SLASH
+    CMP.L   #8,D7
+    BLT     PRINT_D_D7_END_FORWARDS
+    BRA     PRINT_A_D7_FORWARDS
+
+PRINT_D_D7_END_FORWARDS
+    JSR     PRINT_D
+    MOVE.L  D7,D2
+    JSR     OUTPUT_HEXADECIMAL
+    RTS
+
+PRINT_A_D7_END_REVERSE
+    JSR     PRINT_A
+    MOVE.L  #7,D2
+    SUB.L   D7,D2
+    JSR     OUTPUT_HEXADECIMAL
     RTS
     
-MOVEM_PRINT_REVERSE_END
-    BTST    D7,D6
-    BNE     MOVEM_PRINT_REVERSE_FINAL
-    ADD.B   #1,D7
-    JMP     MOVEM_PRINT_REVERSE_END
+PRINT_SINGULAR_REVERSE_END     *Prints the single register that was being moved.
+    JSR     PRINT_SLASH
+    CMP.L   #8,D7
+    BLT     PRINT_A_D7_END_REVERSE
+    BRA     PRINT_D_D7_REVERSE
     
-MOVEM_PRINT_END
-
-    BTST    D7,D6
-    BNE     MOVEM_PRINT_FINAL
-    ADD.B   #1,D7
-    JMP     MOVEM_PRINT_END
-
-MOVEM_PRINT_REVERSE_FINAL
-    CLR.L   D0
-    MOVE.L  D7,D0
-    CMP     #7,D7
-    BGT     MOVEM_PRINT_REVERSE_Dn
-    JMP     MOVEM_PRINT_REVERSE_An
-
-MOVEM_PRINT_FINAL
-    CLR.L   D0
-    MOVE.L  D7,D0
-    CMP     #7,D7
-    BGT     MOVEM_PRINT_An
-    JMP     MOVEM_PRINT_Dn
+FIND_SET_INDEX  *Finds the next bit in the register list mask that is set. Sets the index in D3.
+    SUB.L   #1,D3
+    CMP.L   #0,D3
+    BLT     FINISHED_FINDING
+    BTST    D3,D6
+    BEQ     FIND_SET_INDEX
+FINISHED_FINDING    
+    RTS
     
+FIND_SET_INDEX_LIST *Finds the next bit in the register list mask that is not set. Sets the index in D3.
+*The difference between D3 and D7 should give the number of contiguous registers.
+    SUB.L   #1,D3
+    CMP.L   #0,D3
+    BLT     FINISHED_FINDING
+    BTST    D3,D6
+    BNE     FIND_SET_INDEX_LIST
+    BRA     FINISHED_FINDING
 *********
 
 MOVEM_PRINT_An
@@ -3054,6 +3190,13 @@ PRINT_COMMA
     TRAP    #15
     MOVE.L  (SP)+,D1
     RTS
+PRINT_SLASH
+    MOVE.L  D1,-(SP)
+    MOVE.B  #'/',D1
+    MOVE.B  #6,D0
+    TRAP    #15
+    MOVE.L  (SP)+,D1
+    RTS
 PRINT_SPACE
     MOVE.L  D1,-(SP)
     MOVE.B  #9,D1   *TAB
@@ -3238,6 +3381,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 
