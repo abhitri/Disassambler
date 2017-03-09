@@ -10,7 +10,7 @@
 NOP_CODE    EQU     %0100111001110001     
 RTS_CODE    EQU     %0100111001110101
 TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
-PAGE_SIZE   EQU     25   
+PAGE_SIZE   EQU     30   
     ORG     $1000
 START:                  ; first instruction of program
             MOVEA.L  #0,A6
@@ -2962,9 +2962,16 @@ VALID_MODE_SOURCE_DEST_011
     RTS
 
 PRINT_INVALID_OPCODE
-    LEA     INVALID_MESS,A1 
-    MOVE.B  #14,D0      
+    MOVE.L  A0,D3
+    MOVE.L  D3,D6
+    MOVE.L  D1,D2
+    LEA     INVALID_MESS,A1
+    MOVE.B  #14,D0
     TRAP    #15
+    JSR     PRINT_SPACE
+    JSR     PRINT_$
+    JSR     OUTPUT_HEXADECIMAL
+    JSR     PRINT_SPACE
     JMP     RELOOP
     
 HEXINPUT             
@@ -3352,7 +3359,7 @@ BVS_MESS        DC.B    'BVS',0
 TRAP_MESS       DC.B    'TRAP',0
 JMP_MESS        DC.B    'JMP',0
 NEXT_LINE       DC.B    CR,LF,0    
-INVALID_MESS    DC.B    'INVALID OPCODE',0
+INVALID_MESS    DC.B    'DATA',0
 
 MESSAGE0         DC.B CR,LF,'Welcome to Disassembler.',CR,LF,'Created by: Abhi Trivedi, Conor Van Achte, and Samuel Meyerding.',CR,LF,0       
 MESSAGE1         DC.B 'Please enter a starting address for your program: ',0
@@ -3381,6 +3388,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 
