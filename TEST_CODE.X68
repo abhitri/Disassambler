@@ -10,10 +10,16 @@ START:                  ; first instruction of program
     MOVEM.L (SP)+,A7/A4-A3/A1-A0/D6-D5/D3/D1
     MOVEM.L (SP)+,A4-A3/A1-A0/D6-D5
     MOVEM.L A4-A3/A1-A0/D3-D1,-(SP)
+    
     MOVEM.L A7/A4-A3/A1-A0/D6-D5/D3/D1,(SP)
     MOVEM.L (SP),A7/A4-A3/A1-A0/D6-D5/D3/D1
     MOVEM.L (SP),A4-A3/A1-A0/D6-D5
     MOVEM.L A4-A3/A1-A0/D3-D1,(SP)
+    
+    MOVEM.L A7/A4-A3/A1-A0/D6-D5/D3/D1,$10
+    MOVEM.L $100000,A7/A4-A3/A1-A0/D6-D5/D3/D1
+    MOVEM.L $10,A4-A3/A1-A0/D6-D5
+    MOVEM.L A4-A3/A1-A0/D3-D1,$100000
 
 *Start of Move test code.***************************************************
 ****************************************************************************
