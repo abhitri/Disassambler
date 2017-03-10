@@ -1643,14 +1643,14 @@ MOVEM_PRINT_LONG_JSR_RELOOP
     JMP     MOVEM_MEM_PRINTED_SIZE
     
 MOVEM_MEM_REG               *Direction of transfer is memory to register.
-    LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
-    MOVE.B  #14,D0      
-    TRAP    #15
     MOVE.B  #%11010100,D7       *Valid modes for this OPCode.
     JSR     SRC_EFF_ADDR_MODE_REG   *Check value in mode for validity
     BTST    #0,D3                   *Checking result of subroutine's check for valid final 6 bits.
     BEQ     PRINT_INVALID_OPCODE    *If invalid, then print error message for invalid OPCode.
     CLR.L   D6
+    LEA     MOVEM_MESS,A1   *Outputs the message 'MOVEM.'.
+    MOVE.B  #14,D0      
+    TRAP    #15
     MOVE.W  (A2)+,D6                *Get the remaining word for this OPCode.
     BTST    #6,D1
     BNE     MOVEM_PRINT_LONG_JSR_RELOOP    
@@ -3404,6 +3404,7 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
 
 
