@@ -13,6 +13,7 @@ TRAP_CODE   EQU     %0100111001000000   *The left 12 bits do not vary.
 PAGE_SIZE   EQU     30   
     ORG     $1000
 START:                  ; first instruction of program
+            MOVEA.L  A7,A5
             MOVEA.L  #0,A6
 INPUT        
              LEA MESSAGE0,A1
@@ -29,6 +30,8 @@ GO_AGAIN
              MOVE.B  #2,D0            ;This picks the trap task for input of a string
              TRAP    #15
              JSR    HEXINPUT
+             BTST   #0,D3
+             BNE    OUTPUT_ERRORMESSAGE2
              MOVE.L  D3,D4
              CLR.L   D3
              LEA MESSAGE2,A1
@@ -38,7 +41,10 @@ GO_AGAIN
              MOVE.B  #2,D0            ;This picks the trap task for input of a string
              TRAP    #15
              JSR    HEXINPUT
+             BTST   #0,D3
+             BNE    OUTPUT_ERRORMESSAGE2
 CHECKADDRESS 
+             
              CMP.L       D4,D3
              BLT         OUTPUT_ERRORMESSAGE1
              MOVEA.L     D4,A2
@@ -70,6 +76,7 @@ RELOOP
     CLR.L   D5
     CLR.L   D6
     CLR.L   D7
+    MOVEA.L A5, A7
     CMPA.W  #PAGE_SIZE,A6
     BEQ     CALL_ONE_PAGE_PRINTED
     ADD    #1,A6
@@ -1309,8 +1316,11 @@ MOVEM_REG_MEM               *Direction of transfer is register to memory.
     
     JSR     TEST_LONG_WORD
     JSR     CHECK_ADDR_MODE
-    
-    BRA     MOVEM_PRINT_LIST_REVERSE
+    MOVE.L  D1,D2
+    AND.L   #%111000,D2
+    CMP.L   #%100000,D2
+    BEQ     MOVEM_PRINT_LIST_REVERSE
+    JSR     MOVEM_PRINT_LIST
 MOVEM_REG_PRINT_SECOND
     JSR     JSR_COMMA
     BTST    #5,D1
@@ -1502,14 +1512,14 @@ PRINT_SINGULAR_FORWARDS_END     *Prints the single register that was being moved
 
 PRINT_D_D7_END_FORWARDS
     JSR     PRINT_D
-    MOVE.L  D7,D2
+    MOVE.L  D3,D2
     JSR     OUTPUT_HEXADECIMAL
     RTS
 
 PRINT_A_D7_END_REVERSE
     JSR     PRINT_A
     MOVE.L  #7,D2
-    SUB.L   D7,D2
+    SUB.L   D3,D2
     JSR     OUTPUT_HEXADECIMAL
     RTS
     
@@ -3183,6 +3193,11 @@ OUTPUT_ERRORMESSAGE1
               MOVE.B  #14, D0
               TRAP    #15   
               BRA    GO_AGAIN
+OUTPUT_ERRORMESSAGE2
+              LEA    ERRORMESSAGE2,A1
+              MOVE.B  #14, D0
+              TRAP    #15   
+              BRA    GO_AGAIN
 PRINT_D
     MOVE.L  D1,-(SP)
     MOVE.B  #'D',D1
@@ -3366,6 +3381,7 @@ MESSAGE1         DC.B 'Please enter a starting address for your program: ',0
 MESSAGE2         DC.B 'Please enter an ending address for your program: ',0
 PAGE_PRINT_MESSAGE  DC.B CR,LF,'Please press enter to continue: ',0
 ERRORMESSAGE1    DC.B 'Your ending address is less than the starting address',CR,LF,0
+ERRORMESSAGE2    DC.B 'Error, entered addresses must be even numbers.',CR,LF,0
 ENDOFPROGRAM     DC.B CR,LF,'Do you want to disassemble some more memory? (y/n)',CR,LF,0
 NEWLINE          DC.B CR,LF,0
 
@@ -3388,6 +3404,8 @@ QUIT
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
+
 
 
 
